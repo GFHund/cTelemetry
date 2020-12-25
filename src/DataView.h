@@ -11,4 +11,6 @@ class DataView: public wxFrame{
     // ctor(s)
     DataView(wxWindow* parent=(wxWindow *)NULL);
     ~DataView();
+
+    void OnFileOpenButton(wxCommandEvent& event);
 };

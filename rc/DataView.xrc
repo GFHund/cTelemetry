@@ -47,7 +47,7 @@
 								<flag>wxALL</flag>
 								<border>5</border>
 								<object class="wxBitmapButton" name="mFileOpenButton">
-									<bitmap />
+									<bitmap>icons/OpenIcon.png</bitmap>
 									<default>0</default>
 								</object>
 							</object>
@@ -56,7 +56,7 @@
 								<flag>wxALL</flag>
 								<border>5</border>
 								<object class="wxBitmapButton" name="m_bpButton2">
-									<bitmap>icons/OpenIcon.png</bitmap>
+									<bitmap>icons/x.png</bitmap>
 									<default>0</default>
 								</object>
 							</object>
