@@ -42,7 +42,7 @@
             <property name="hidden">0</property>
             <property name="id">wxID_ANY</property>
             <property name="maximum_size"></property>
-            <property name="minimum_size"></property>
+            <property name="minimum_size">1280,768</property>
             <property name="name">DiagramView</property>
             <property name="pos"></property>
             <property name="size">500,300</property>
@@ -475,7 +475,7 @@
                                         <property name="aui_row"></property>
                                         <property name="best_size"></property>
                                         <property name="bg"></property>
-                                        <property name="bitmap"></property>
+                                        <property name="bitmap">Load From File; icons/OpenIcon.png</property>
                                         <property name="caption"></property>
                                         <property name="caption_visible">1</property>
                                         <property name="center_pane">0</property>
@@ -507,7 +507,7 @@
                                         <property name="minimize_button">0</property>
                                         <property name="minimum_size"></property>
                                         <property name="moveable">1</property>
-                                        <property name="name">m_bpButton1</property>
+                                        <property name="name">mFileOpenButton</property>
                                         <property name="pane_border">1</property>
                                         <property name="pane_position"></property>
                                         <property name="pane_size"></property>

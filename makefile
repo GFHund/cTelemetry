@@ -1,4 +1,4 @@
-objects = App.o	DiagramView.o DiagramWidget.o
+objects = App.o	DiagramView.o DiagramWidget.o DataView.o
 CPPFLAGS += `wx-config --cxxflags` 
 
 all: $(objects)
@@ -6,9 +6,10 @@ all: $(objects)
 App.o: src/App.cpp
 DiagramView.o: src/DiagramView.cpp
 DiagrammWidget.o: src/CustomWidgets/DiagramWidget.cpp
+DataView.o: src/DataView.cpp
 
 clean:
-	rm $(objects)
+	rm $(objects) cTelemetry
 	
 %.o: src/%.cpp
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -I src/

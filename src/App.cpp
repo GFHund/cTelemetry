@@ -1,6 +1,7 @@
 #include "App.h"
 
 #include "DiagramView.h"
+#include "DataView.h"
 #include "wx/xrc/xmlres.h"
 #if wxUSE_AUI
     #include "wx/xrc/xh_aui.h"
@@ -19,9 +20,7 @@ bool App::OnInit(){
 	#if wxUSE_GIF
 		wxImage::AddHandler(new wxGIFHandler);
 	#endif
-	#if wxUSE_PNG
-		wxImage::AddHandler(new wxPNGHandler );
-	#endif
+	wxImage::AddHandler(new wxPNGHandler );
 	
 	// Initialize all the XRC handlers. Always required (unless you feel like
     // going through and initializing a handler of each control type you will
@@ -47,6 +46,9 @@ bool App::OnInit(){
 		
 	DiagramView * dView = new DiagramView();
 	dView->Show();
+	
+	DataView* dataView = new DataView();
+	dataView->Show();
 		
 	return true;
 }
