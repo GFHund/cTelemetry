@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<resource xmlns="http://www.wxwindows.org/wxxrc" version="2.3.0.1">
+	<object class="wxMenuBar" name="mMenu">
+		<label>MyMenuBar</label>
+		<object class="wxMenu" name="mFileMenu">
+			<label>File</label>
+			<object class="wxMenuItem" name="mQuitMenuItem">
+				<label>Exit</label>
+				<help></help>
+			</object>
+		</object>
+		<object class="wxMenu" name="mViewMenu">
+			<label>View</label>
+			<object class="wxMenuItem" name="mDiagrammHoverBox">
+				<label>enable diagramm hover box</label>
+				<help></help>
+			</object>
+		</object>
+	</object>
+</resource>
