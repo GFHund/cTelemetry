@@ -2,6 +2,9 @@
 
 #include "wx/xrc/xmlres.h"
 #include <string>
+#include "data/FileManager.h"
+#include "data/Exceptions/FileNotFoundException.h"
+#include "data/Exceptions/FileOpenErrorException.h"
 
 BEGIN_EVENT_TABLE(DataView, wxFrame)
 	EVT_BUTTON(XRCID("mFileOpenButton"), DataView::OnFileOpenButton)
@@ -17,6 +20,24 @@ void DataView::OnFileOpenButton(wxCommandEvent& event){
 	if(openFileDialog.ShowModal() == wxID_CANCEL){
 		return;
 	}
-	std::string path = openFileDialog.GetPath().ToStdString();
+
+	try{
+		std::string path = openFileDialog.GetPath().ToStdString();
+		FileManager::getInstance()->openFile(path);
+
+	}catch(FileNotFoundException &e){
+		std::string message = "Error: ";
+		message += e.what();
+		wxString wxMessage = wxString(message);
+		wxMessageDialog* msg = new wxMessageDialog(this,wxMessage,"File Not Found Error",wxOK|wxCENTRE|wxICON_ERROR);
+		msg->ShowModal();
+	}catch(FileOpenErrorException &e){
+		std::string message = "Error: ";
+		message += e.what();
+		wxString wxMessage = wxString(message);
+		wxMessageDialog* msg = new wxMessageDialog(this,wxMessage,"File Not Found Error",wxOK|wxCENTRE|wxICON_ERROR);
+		msg->ShowModal();
+	}
+
 
 }

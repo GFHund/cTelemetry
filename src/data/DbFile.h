@@ -1,8 +1,11 @@
-#ifndef __CONVERTER_INTERFACE__
-#define __CONVERTER_INTERFACE__
-
+#ifndef __DB_FILE__
+#define __DB_FILE__
+#include "../vendor/sqlite3/sqlite3.h"
 class DbFile{
-	
-}
+	private:
+        sqlite3* mDb;
+    public:
+        DbFile(sqlite3* db);
+};
 
 #endif
