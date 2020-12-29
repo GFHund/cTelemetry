@@ -23,6 +23,7 @@ class FileManager{
 	void openFile(std::string path);
 
 	std::vector<std::string> getOpenFiles();
+	bool closeFile(std::string name);
 	DbFile& getOpenDbFileByName(std::string name);
 	
 };

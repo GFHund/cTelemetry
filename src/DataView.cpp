@@ -12,6 +12,7 @@
 
 BEGIN_EVENT_TABLE(DataView, wxFrame)
 	EVT_BUTTON(XRCID("mFileOpenButton"), DataView::OnFileOpenButton)
+	EVT_BUTTON(XRCID("mCloseFile"), DataView::OnFileCloseButton)
 	EVT_LISTBOX(XRCID("mOpenFiles"),DataView::OnFileOpenListSelectItem)
 END_EVENT_TABLE()
 
@@ -65,6 +66,17 @@ void DataView::OnFileOpenButton(wxCommandEvent& event){
 
 	wxListBox* pFileOpenList = XRCCTRL(*this, "mOpenFiles", wxListBox);
 	pFileOpenList->InsertItems(wxFileNames.size(),wxFileNames.data(),0);
+}
+void DataView::OnFileCloseButton(wxCommandEvent& event){
+	wxListBox* pFileOpenList = XRCCTRL(*this, "mOpenFiles", wxListBox);
+	int selectionIndex = pFileOpenList->GetSelection();
+	wxString selectionString = pFileOpenList->GetString(selectionIndex);
+	if(FileManager::getInstance()->closeFile(selectionString.ToStdString())){
+		pFileOpenList->Delete(selectionIndex);
+		wxDataViewListCtrl* fileDataList = XRCCTRL(*this, "mFileDataList", wxDataViewListCtrl);
+		fileDataList->DeleteAllItems();
+	}
+	
 }
 
 void DataView::OnFileOpenListSelectItem(wxCommandEvent& event){

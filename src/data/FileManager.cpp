@@ -82,6 +82,15 @@ std::vector<std::string> FileManager::getOpenFiles(){
     }
     return ret;
 }
+bool FileManager::closeFile(std::string name){
+    for(auto i = mFiles.begin();i!= mFiles.end();i++){
+        if(name.compare(i->getName()) == 0){
+            mFiles.erase(i);
+            return true;
+        }
+    }
+    return false;
+}
 DbFile& FileManager::getOpenDbFileByName(std::string name){
     for(auto i = mFiles.begin();i!= mFiles.end();i++){
         if(name.compare(i->getName()) == 0){

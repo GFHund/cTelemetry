@@ -6,7 +6,7 @@ DbFile::DbFile(sqlite3* db,std::string name){
     mName = name;
 }
 DbFile::~DbFile(){
-    sqlite3_close(this->mDb);
+    //sqlite3_close(this->mDb);
 }
 std::string DbFile::getName(){
     return this->mName;
