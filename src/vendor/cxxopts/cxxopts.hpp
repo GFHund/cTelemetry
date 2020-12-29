@@ -1538,6 +1538,12 @@ namespace cxxopts
       std::string arg_help = ""
     );
 
+    OptionAdder& add(const std::string& opts,
+      const std::string& desc,
+      const std::shared_ptr<const Value>& value
+        = ::cxxopts::value<bool>(),
+      std::string arg_help = "");
+
     private:
     Options& m_options;
     std::string m_group;
@@ -1753,6 +1759,55 @@ OptionAdder::operator()
 
   return *this;
 }
+inline OptionAdder& OptionAdder::add(
+  const std::string& opts,
+  const std::string& desc,
+  const std::shared_ptr<const Value>& value,
+  std::string arg_help){
+    std::match_results<const char*> result;
+  std::regex_match(opts.c_str(), result, option_specifier);
+
+  if (result.empty())
+  {
+    throw_or_mimic<invalid_option_format_error>(opts);
+  }
+
+  const auto& short_match = result[2];
+  const auto& long_match = result[3];
+
+  if (!short_match.length() && !long_match.length())
+  {
+    throw_or_mimic<invalid_option_format_error>(opts);
+  } else if (long_match.length() == 1 && short_match.length())
+  {
+    throw_or_mimic<invalid_option_format_error>(opts);
+  }
+
+  auto option_names = []
+  (
+    const std::sub_match<const char*>& short_,
+    const std::sub_match<const char*>& long_
+  )
+  {
+    if (long_.length() == 1)
+    {
+      return std::make_tuple(long_.str(), short_.str());
+    }
+    return std::make_tuple(short_.str(), long_.str());
+  }(short_match, long_match);
+
+  m_options.add_option
+  (
+    m_group,
+    std::get<0>(option_names),
+    std::get<1>(option_names),
+    desc,
+    value,
+    std::move(arg_help)
+  );
+
+  return *this;
+  }
 
 inline
 void

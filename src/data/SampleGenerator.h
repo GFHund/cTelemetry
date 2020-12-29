@@ -1,21 +1,13 @@
-#ifndef __F1_2020_CONVERTER__
-#define __F1_2020_CONVERTER__
+#ifndef __SAMPLE_GENERATOR__
+#define __SAMPLE_GENERATOR__
 #include "ConverterInterface.h"
-#include <string>
 
-class F1_2020_Converter: public ConverterInterface{
+class SampleGenerator: public ConverterInterface{
     protected:
-	struct lapArea{
-		int lap;
-		float sessionTimeMin;
-		float sessionTimeMax;
-	};
-
     void insertDriversTable(sqlite3* f1Db,sqlite3* convertedDb);
 
     void insertLapTable(sqlite3* f1Db,sqlite3* convertedDb);
 
-    void createDataTables(sqlite3*f1Db,sqlite3* convertedDb);
 
     void insertReferenceDataTable(sqlite3* f1Db,sqlite3* convertedDb);
 
@@ -29,4 +21,5 @@ class F1_2020_Converter: public ConverterInterface{
     bool isFile(sqlite3* db);
 	sqlite3* convert(std::string path,sqlite3* db);
 };
+
 #endif

@@ -36,8 +36,8 @@ struct ParticipantData
     uint8_t      m_teamId;                 // Team id - see appendix
     uint8_t      m_raceNumber;             // Race number of the car
     uint8_t      m_nationality;            // Nationality of the driver
-    char       m_name[48];               // Name of participant in UTF-8 format – null terminated
-                                         // Will be truncated with … (U+2026) if too long
+    char       m_name[48];               // Name of participant in UTF-8 format ï¿½ null terminated
+                                         // Will be truncated with ï¿½ (U+2026) if too long
     uint8_t      m_yourTelemetry;          // The player's UDP setting, 0 = restricted, 1 = public
 };
 
@@ -45,7 +45,7 @@ struct PacketParticipantsData
 {
     PacketHeader    m_header;           // Header
 
-    uint8_t           m_numActiveCars;	// Number of active cars in the data – should match number of
+    uint8_t           m_numActiveCars;	// Number of active cars in the data ï¿½ should match number of
                                         // cars on HUD
     ParticipantData m_participants[22];
 };
@@ -71,10 +71,10 @@ struct LapData
     uint8_t    m_bestOverallSector3LapNum;  // Lap number best overall sector 3 time achieved on
 
 
-    float    m_lapDistance;               // Distance vehicle is around current lap in metres – could
-                                          // be negative if line hasn’t been crossed yet
-    float    m_totalDistance;             // Total distance travelled in session in metres – could
-                                          // be negative if line hasn’t been crossed yet
+    float    m_lapDistance;               // Distance vehicle is around current lap in metres ï¿½ could
+                                          // be negative if line hasnï¿½t been crossed yet
+    float    m_totalDistance;             // Total distance travelled in session in metres ï¿½ could
+                                          // be negative if line hasnï¿½t been crossed yet
     float    m_safetyCarDelta;            // Delta in seconds for safety car
     uint8_t    m_carPosition;               // Car race position
     uint8_t    m_currentLapNum;             // Current lap number
@@ -128,7 +128,7 @@ struct PacketCarTelemetryData
 
     // Added in Beta 3:
     uint8_t               m_mfdPanelIndex;       // Index of MFD panel open - 255 = MFD closed
-                                               // Single player, race – 0 = Car setup, 1 = Pits
+                                               // Single player, race ï¿½ 0 = Car setup, 1 = Pits
                                                // 2 = Damage, 3 =  Engine, 4 = Temperatures
                                                // May vary depending on game mode
     uint8_t               m_mfdPanelIndexSecondaryPlayer;   // See above
@@ -212,10 +212,18 @@ sqlite3* F1_2020_Converter::convert(std::string path,sqlite3* db){
         throw FileNotFoundException(path);
     }
     try{
+		
         this->createFileInfoTable(convertedDb);
+		this->insertFileInfoTable(convertedDb);
+
         this->createDriversTable(db, convertedDb);
+		this->insertDriversTable(db, convertedDb);
+
         this->createLapTable(db, convertedDb);
+		this->insertLapTable(db, convertedDb);
+
         this->createLegendTable(convertedDb);
+		this->insertLegendTable(convertedDb);
         this->createDataTables(db, convertedDb);
         return convertedDb;
     }catch(SQLErrorException e){
@@ -224,42 +232,12 @@ sqlite3* F1_2020_Converter::convert(std::string path,sqlite3* db){
     
 }
 //--------------------------------------
-void F1_2020_Converter::createFileInfoTable(sqlite3* convertedDb){
-    std::string createSql = "CREATE TABLE IF NOT EXISTS file_info(file_property TEXT,file_value TEXT)";
-    sqlite3_stmt* stmt;
-    if(sqlite3_prepare_v2(convertedDb,createSql.c_str(),createSql.size(),&stmt,NULL) != SQLITE_OK){
-        throw SQLErrorException(sqlite3_errmsg(convertedDb),createSql);
-    }
-    int ret_code = 0;
-    ret_code = sqlite3_step(stmt);
-    sqlite3_finalize(stmt);
-    if(ret_code != SQLITE_DONE){
-        throw SQLErrorException(sqlite3_errmsg(convertedDb),createSql);
-    }
-
-    std::string insertSql = "INSERT INTO file_info(file_property,file_value) VALUES (\"VERSION\",\"1.0.0\")";
-    if(sqlite3_prepare_v2(convertedDb,insertSql.c_str(),insertSql.size(),&stmt,NULL) != SQLITE_OK){
-        throw SQLErrorException(sqlite3_errmsg(convertedDb),insertSql);
-    }
-    ret_code = sqlite3_step(stmt);
-    sqlite3_finalize(stmt);
-    if(ret_code != SQLITE_DONE){
-        throw SQLErrorException(sqlite3_errmsg(convertedDb),insertSql);
-    }
-}
 //--------------------------------------
-void F1_2020_Converter::createDriversTable(sqlite3* f1Db,sqlite3* convertedDb){
-    std::string createSql = "CREATE TABLE IF NOT EXISTS driver(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT,number INTEGER)";
+
+//--------------------------------------
+void F1_2020_Converter::insertDriversTable(sqlite3* f1Db,sqlite3* convertedDb){
     sqlite3_stmt* stmt;
-    if(sqlite3_prepare_v2(convertedDb,createSql.c_str(),createSql.size(),&stmt,NULL) != SQLITE_OK){
-        throw SQLErrorException(sqlite3_errmsg(convertedDb),createSql);
-    }
-    int ret_code = 0;
-    ret_code = sqlite3_step(stmt);
-    sqlite3_finalize(stmt);
-    if(ret_code != SQLITE_DONE){
-        throw SQLErrorException(sqlite3_errmsg(convertedDb),createSql);
-    }
+	int ret_code;
 
     std::string insertSql = "INSERT INTO driver(name,number) VALUES ";
     std::string selectSql = "SELECT packet FROM packets WHERE packetID = 4 ORDER BY frameIdentifier LIMIT 1";
@@ -298,19 +276,10 @@ void F1_2020_Converter::createDriversTable(sqlite3* f1Db,sqlite3* convertedDb){
 	}
 }
 //--------------------------------------
-void F1_2020_Converter::createLapTable(sqlite3* f1Db,sqlite3* convertedDb){
-	std::string createSql = "CREATE TABLE IF NOT EXISTS lap(id INTEGER PRIMARY KEY AUTOINCREMENT, driver INTEGER,lap_number INTEGER,lap_time REAL)";
+void F1_2020_Converter::insertLapTable(sqlite3* f1Db,sqlite3* convertedDb){
 	sqlite3_stmt* stmt;
-	if(sqlite3_prepare_v2(convertedDb,createSql.c_str(),createSql.size(),&stmt,NULL) != SQLITE_OK){
-		throw SQLErrorException(sqlite3_errmsg(convertedDb),createSql);
-	}
-	int ret_code = 0;
-	ret_code = sqlite3_step(stmt);
-	sqlite3_finalize(stmt);
-	if(ret_code != SQLITE_DONE){
-		throw SQLErrorException(sqlite3_errmsg(convertedDb),createSql);
-	}
-
+	int ret_code;
+	
 	std::string insertSql = "INSERT INTO lap(driver,lap_number,lap_time) VALUES ";
 	std::string selectSql = "SELECT packet FROM packets WHERE packetID = 2 GROUP BY frameIdentifier ORDER BY frameIdentifier";
 	if(sqlite3_prepare_v2(f1Db,selectSql.c_str(),selectSql.size(),&stmt,NULL) != SQLITE_OK){
@@ -376,51 +345,25 @@ void F1_2020_Converter::createLapTable(sqlite3* f1Db,sqlite3* convertedDb){
 	}
 }
 //--------------------------------------
-void F1_2020_Converter::createLegendTable(sqlite3* convertedDb){
-	std::string createSql = "CREATE TABLE IF NOT EXISTS legend(key INTEGER, propertyname TEXT)";
-	std::string insertSql = "INSERT INTO legend (key,propertyname) VALUES (1,\"Speed\"),(2,\"throttle\"),(3,\"break\"),(4,\"steer\"),(5,\"rpm\"),(6,\"gear\"),(7,\"lap Distance\"),(8,\"lap time\"),(9,\"pos\")";
-	sqlite3_stmt* stmt;
-	//SQL CREATE TABLE
-	if(sqlite3_prepare_v2(convertedDb,createSql.c_str(),createSql.size(),&stmt,NULL) != SQLITE_OK){
-		throw SQLErrorException(sqlite3_errmsg(convertedDb),createSql);
-	}
-	int ret_code = 0;
-	ret_code = sqlite3_step(stmt);
-	sqlite3_finalize(stmt);
-	if(ret_code != SQLITE_DONE){
-		throw SQLErrorException(sqlite3_errmsg(convertedDb),createSql);
-	}
-	//SQL Insert
-	if(sqlite3_prepare_v2(convertedDb,insertSql.c_str(),insertSql.size(),&stmt,NULL) != SQLITE_OK){
-		throw SQLErrorException(sqlite3_errmsg(convertedDb),insertSql);
-	}
-	ret_code = sqlite3_step(stmt);
-	sqlite3_finalize(stmt);
-	if(ret_code != SQLITE_DONE){
-		throw SQLErrorException(sqlite3_errmsg(convertedDb),insertSql);
-	}
-}
+
 //--------------------------------------
 void F1_2020_Converter::createDataTables(sqlite3* f1Db,sqlite3* convertedDb){
 	createReferenceDataTable(f1Db, convertedDb);
+	insertReferenceDataTable(f1Db, convertedDb);
+	
 	createFloatDataTable(f1Db, convertedDb);
+	insertFloatDataTable(f1Db, convertedDb);
+
 	createIntDataTable(f1Db, convertedDb);
+	insertIntDataTable(f1Db, convertedDb);
+
 	createVec3DataTable(f1Db, convertedDb);
+	insertVec3DataTable(f1Db, convertedDb);
 }
 //--------------------------------------
-void F1_2020_Converter::createReferenceDataTable(sqlite3*f1Db,sqlite3* convertedDb){
-	std::string createSql = "CREATE TABLE IF NOT EXISTS reference_unit(id INTEGER PRIMARY KEY AUTOINCREMENT,lap_id INTEGER, session_time REAL,frame_identifier INTEGER,lap_distance REAL,lap_time REAL,lap_invalid INTEGER)";
+void F1_2020_Converter::insertReferenceDataTable(sqlite3*f1Db,sqlite3* convertedDb){
 	sqlite3_stmt* stmt;
-	//CREATE Reference Table(for the x Axis);
-	if(sqlite3_prepare_v2(convertedDb,createSql.c_str(),createSql.size(),&stmt,NULL) != SQLITE_OK){
-		throw SQLErrorException(sqlite3_errmsg(convertedDb),createSql);
-	}
-	int ret_code = 0;
-	ret_code = sqlite3_step(stmt);
-	sqlite3_finalize(stmt);
-	if(ret_code != SQLITE_DONE){
-		throw SQLErrorException(sqlite3_errmsg(convertedDb),createSql);
-	}
+	int ret_code;
 
 	std::string insertSql = "INSERT INTO reference_unit(lap_id, lap_distance, lap_time, session_time, frame_identifier,lap_invalid) VALUES ";
 	std::string selectSql = "SELECT packet FROM packets WHERE packetID = 2 GROUP BY frameIdentifier ORDER BY frameIdentifier";
@@ -519,19 +462,9 @@ void F1_2020_Converter::createReferenceDataTable(sqlite3*f1Db,sqlite3* converted
 
 }
 //--------------------------------------
-void F1_2020_Converter::createFloatDataTable(sqlite3* f1Db,sqlite3* convertedDb){
-	std::string createSql = "CREATE TABLE IF NOT EXISTS float_data(id INTEGER PRIMARY KEY AUTOINCREMENT,reference_unit_id INTEGER, property_id INTEGER, float_val REAL)";
+void F1_2020_Converter::insertFloatDataTable(sqlite3* f1Db,sqlite3* convertedDb){
 	sqlite3_stmt* stmt;
-	//CREATE float_data Table(for the y Axis);
-	if(sqlite3_prepare_v2(convertedDb,createSql.c_str(),createSql.size(),&stmt,NULL) != SQLITE_OK){
-		throw SQLErrorException(sqlite3_errmsg(convertedDb),createSql);
-	}
-	int ret_code = 0;
-	ret_code = sqlite3_step(stmt);
-	sqlite3_finalize(stmt);
-	if(ret_code != SQLITE_DONE){
-		throw SQLErrorException(sqlite3_errmsg(convertedDb),createSql);
-	}
+	int ret_code;
 
 	std::string insertSql = "INSERT INTO float_data(reference_unit_id, property_id, float_val) VALUES ";
 	std::string convertedSelect = "SELECT ref.id, ref.frame_identifier, l.driver FROM reference_unit ref INNER JOIN lap l ON l.id = ref.lap_id";
@@ -611,24 +544,14 @@ void F1_2020_Converter::createFloatDataTable(sqlite3* f1Db,sqlite3* convertedDb)
 	}
 }
 //--------------------------------------
-void F1_2020_Converter::createIntDataTable(sqlite3*f1Db,sqlite3* convertedDb){
-	std::string createSql = "CREATE TABLE IF NOT EXISTS int_data(id INTEGER PRIMARY KEY AUTOINCREMENT,reference_unit_id INTEGER, property_id INTEGER, int_val INTEGER)";
+void F1_2020_Converter::insertIntDataTable(sqlite3*f1Db,sqlite3* convertedDb){
 	sqlite3_stmt* stmt;
-	//CREATE float_data Table(for the y Axis);
-	if(sqlite3_prepare_v2(convertedDb,createSql.c_str(),createSql.size(),&stmt,NULL) != SQLITE_OK){
-		throw SQLErrorException(sqlite3_errmsg(convertedDb),createSql);
-	}
-	int ret_code = 0;
-	ret_code = sqlite3_step(stmt);
-	sqlite3_finalize(stmt);
-	if(ret_code != SQLITE_DONE){
-		throw SQLErrorException(sqlite3_errmsg(convertedDb),createSql);
-	}
+	int ret_code;
 
 	std::string insertSql = "INSERT INTO int_data(reference_unit_id, property_id, int_val) VALUES ";
 	std::string convertedSelect = "SELECT ref.id, ref.frame_identifier, l.driver FROM reference_unit ref INNER JOIN lap l ON l.id = ref.lap_id";
 	if(sqlite3_prepare_v2(convertedDb,convertedSelect.c_str(),convertedSelect.size(),&stmt,NULL) != SQLITE_OK){
-		throw SQLErrorException(sqlite3_errmsg(convertedDb),createSql);
+		throw SQLErrorException(sqlite3_errmsg(convertedDb),convertedSelect);
 	}
 	bool bFirst = true;
 	int numData = 0;
@@ -705,24 +628,14 @@ void F1_2020_Converter::createIntDataTable(sqlite3*f1Db,sqlite3* convertedDb){
 	}
 }
 //--------------------------------------
-void F1_2020_Converter::createVec3DataTable(sqlite3*f1Db,sqlite3* convertedDb){
-	std::string createSql = "CREATE TABLE IF NOT EXISTS vec_data(id INTEGER PRIMARY KEY AUTOINCREMENT,reference_unit_id INTEGER, property_id INTEGER, x_val REAL,y_val REAL,z_val REAL)";
+void F1_2020_Converter::insertVec3DataTable(sqlite3*f1Db,sqlite3* convertedDb){
 	sqlite3_stmt* stmt;
-	//CREATE float_data Table(for the y Axis);
-	if(sqlite3_prepare_v2(convertedDb,createSql.c_str(),createSql.size(),&stmt,NULL) != SQLITE_OK){
-		throw SQLErrorException(sqlite3_errmsg(convertedDb),createSql);
-	}
-	int ret_code = 0;
-	ret_code = sqlite3_step(stmt);
-	sqlite3_finalize(stmt);
-	if(ret_code != SQLITE_DONE){
-		throw SQLErrorException(sqlite3_errmsg(convertedDb),createSql);
-	}
+	int ret_code;
 
 	std::string insertSql = "INSERT INTO vec_data(reference_unit_id, property_id, x_val,y_val,z_val) VALUES ";
 	std::string convertedSelect = "SELECT ref.id, ref.frame_identifier, l.driver FROM reference_unit ref INNER JOIN lap l ON l.id = ref.lap_id";
 	if(sqlite3_prepare_v2(convertedDb,convertedSelect.c_str(),convertedSelect.size(),&stmt,NULL) != SQLITE_OK){
-		throw SQLErrorException(sqlite3_errmsg(convertedDb),createSql);
+		throw SQLErrorException(sqlite3_errmsg(convertedDb),convertedSelect);
 	}
 	bool bFirst = true;
 	int numData = 0;
