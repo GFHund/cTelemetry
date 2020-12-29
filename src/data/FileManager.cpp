@@ -5,6 +5,7 @@
 #include "Exceptions/FileNotFoundException.h"
 #include "Exceptions/SQLErrorException.h"
 #include "Exceptions/FileOpenErrorException.h"
+#include "Exceptions/NotFoundException.h"
 #include "F1_2020_Converter.h"
 
 FileManager* FileManager::mInstance = 0;
@@ -47,6 +48,7 @@ void FileManager::openFile(std::string path){
                 }
             }
         }
+        mFiles.push_back(DbFile(db,path));
     }catch(SQLErrorException e){
     	std::string errorMsg = std::string(e.what());
     	sqlite3_close(db);
@@ -72,4 +74,19 @@ bool FileManager::checkFile(sqlite3* db){
     }
     sqlite3_finalize(stmt);
     return hasFileInfoTable;
+}
+std::vector<std::string> FileManager::getOpenFiles(){
+    std::vector<std::string> ret;
+    for(auto i = mFiles.begin();i!= mFiles.end();i++){
+        ret.push_back(i->getName());
+    }
+    return ret;
+}
+DbFile& FileManager::getOpenDbFileByName(std::string name){
+    for(auto i = mFiles.begin();i!= mFiles.end();i++){
+        if(name.compare(i->getName()) == 0){
+            return *i;
+        }
+    }
+    throw NotFoundException();
 }

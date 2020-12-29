@@ -1,7 +1,6 @@
 #include "F1_2020_Converter.h"
 
 #include "Exceptions/SQLErrorException.h"
-#include "Exceptions/SQLErrorException.h"
 #include "Exceptions/FileNotFoundException.h"
 #include <vector>
 #include <array>

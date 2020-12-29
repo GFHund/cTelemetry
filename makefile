@@ -1,4 +1,4 @@
-objects = App.o	DiagramView.o DiagramWidget.o DataView.o FileManager.o ConverterInterface.o F1_2020_Converter.o DbFile.o FileNotFoundException.o FileOpenErrorException.o SQLErrorException.o sqlite3.o 
+objects = App.o	DiagramView.o DiagramWidget.o DataView.o FileManager.o ConverterInterface.o F1_2020_Converter.o DbFile.o FileNotFoundException.o FileOpenErrorException.o SQLErrorException.o NotFoundException.o sqlite3.o 
 objects_converter = main.o ConverterInterface.o F1_2020_Converter.o SampleGenerator.o FileNotFoundException.o SQLErrorException.o sqlite3.o 
 CPPFLAGS += `wx-config --cxxflags` 
 #-g
@@ -21,6 +21,7 @@ DbFile.o: src/data/DbFile.cpp
 FileNotFoundException.o: src/data/Exceptions/FileNotFoundException.cpp
 FileOpenErrorException.o: src/data/Exceptions/FileOpenErrorException.cpp
 SQLErrorException.o: src/data/Exceptions/SQLErrorException.cpp
+NotFoundException.o: src/data/Exceptions/NotFoundException.cpp
 
 sqlite3.o: src/vendor/sqlite3/sqlite3.c
 	gcc $(CPPFLAGS) $(CFLAGS) -c $<

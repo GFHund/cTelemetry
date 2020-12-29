@@ -21,6 +21,9 @@ class FileManager{
 	public:
 	static FileManager* getInstance();
 	void openFile(std::string path);
+
+	std::vector<std::string> getOpenFiles();
+	DbFile& getOpenDbFileByName(std::string name);
 	
 };
 
