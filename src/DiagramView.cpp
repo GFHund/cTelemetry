@@ -2,6 +2,8 @@
 
 #include "CustomWidgets/DiagramWidget.h"
 #include "wx/xrc/xmlres.h"
+#include "data/FileManager.h"
+#include "EventSystem/EventManager.h"
 
 BEGIN_EVENT_TABLE(DiagramView, wxFrame)
 END_EVENT_TABLE()
@@ -35,6 +37,28 @@ DiagramView::DiagramView(wxWindow* parent){
     // for menu items and toolbar tools will automatically get displayed
     // here.
     //CreateStatusBar( 1 );
+    EventManager::getInstance()->subscribe("updateDiagramm",this);
 }
 
 DiagramView::~DiagramView(){}
+
+void DiagramView::event(std::string eventName,EventParam* param){
+    if(eventName.compare("updateDiagramm")){
+        updateDiagramm();
+    }
+}
+void DiagramView::updateDiagramm(){
+    std::map<int,std::string> finalList;
+    wxListBox* propertiesListCtrl = XRCCTRL(*this, "mPropertiesSelector", wxListBox);
+    for(int i=0;i < FileManager::getInstance()->getNumberOfActiveLaps();i++){
+        AnalyseData& data = FileManager::getInstance()->getActiveLap(i);
+        std::map<int,std::string> propertiesName = FileManager::getInstance()->getOpenDbFileByName(data.getFilename()).getYValues();
+        for(auto j = propertiesName.begin();j != propertiesName.end();j++){
+            finalList.insert(std::pair<int,std::string>(j->first,j->second));
+        }
+    }
+    propertiesListCtrl->Clear();
+    for(auto i = finalList.begin();i != finalList.end();i++){
+        propertiesListCtrl->Append(wxString(i->second));
+    }
+}

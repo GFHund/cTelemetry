@@ -3,12 +3,15 @@
 #ifndef WX_PRECOMP
     #include "wx/wx.h"
 #endif
+#include "EventSystem/AbstractEvent.h"
 
-class DiagramView:public wxFrame{
+class DiagramView:public wxFrame, public AbstractEvent{
 	public:
     // ctor(s)
     DiagramView(wxWindow* parent=(wxWindow *)NULL);
 	~DiagramView();
+    void event(std::string eventName,EventParam* param = nullptr);
+    void updateDiagramm();
 
 /*
     // event handlers (these functions should _not_ be virtual)

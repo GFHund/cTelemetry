@@ -115,6 +115,12 @@ bool FileManager::removeActiveLap(AnalyseData lapMetaData){
     }
     return false;
 }
+AnalyseData& FileManager::getActiveLap(int index){
+    if(index >= mActiveLaps.size()){
+        throw NotFoundException();
+    }
+    return mActiveLaps[index];
+}
 int FileManager::getNumberOfActiveLaps(){
     return this->mActiveLaps.size();
 }

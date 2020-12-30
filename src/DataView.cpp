@@ -9,6 +9,7 @@
 #include "data/Exceptions/FileOpenErrorException.h"
 #include "data/Exceptions/NotFoundException.h"
 #include "data/Exceptions/SQLErrorException.h"
+#include "EventSystem/EventManager.h"
 
 BEGIN_EVENT_TABLE(DataView, wxFrame)
 	EVT_BUTTON(XRCID("mFileOpenButton"), DataView::OnFileOpenButton)
@@ -155,6 +156,7 @@ void DataView::addToAnalyseTable(int row){
 		data.push_back(wxVariant("0"));
 		analyseDataList->AppendItem(data);
 		fileDataList->UnselectRow(row);
+		EventManager::getInstance()->fireEvent("updateDiagramm");
 	}
 	else {
 		std::string message = "Could not push the lap to the analyse because it is only ";
@@ -199,6 +201,7 @@ void DataView::removeFromAnalyseTable(int row){
 	AnalyseData metaData = AnalyseData(filename.ToStdString(),player.ToStdString(),iLap,fLapTime,0);
 	if(FileManager::getInstance()->removeActiveLap(metaData)){
 		AnalyseDataList->DeleteItem(row);
+		EventManager::getInstance()->fireEvent("updateDiagramm");
 	}
 	else {
 		std::string message = "Could not delete row";

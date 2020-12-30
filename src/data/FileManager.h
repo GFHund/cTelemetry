@@ -31,6 +31,7 @@ class FileManager{
 
 	bool addActiveLap(AnalyseData lapMetaData);
 	bool removeActiveLap(AnalyseData lapMetaData);
+	AnalyseData& getActiveLap(int index);
 	int getNumberOfActiveLaps();
 	int getMaxNumberOfActiveLaps();
 	

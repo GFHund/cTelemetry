@@ -4,6 +4,8 @@
 #include "FileTableData.h"
 #include <string>
 #include <vector>
+#include <map>
+
 class DbFile{
 	private:
         sqlite3* mDb;
@@ -14,6 +16,7 @@ class DbFile{
 
         std::string getName();
         std::vector<FileTableData> getFileTable();
+        std::map<int,std::string> getYValues();
 };
 
 #endif

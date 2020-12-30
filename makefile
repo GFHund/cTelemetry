@@ -1,4 +1,15 @@
-objects = App.o	DiagramView.o DiagramWidget.o DataView.o FileManager.o ConverterInterface.o F1_2020_Converter.o DbFile.o FileNotFoundException.o FileOpenErrorException.o SQLErrorException.o NotFoundException.o sqlite3.o 
+objects = App.o	\
+DiagramView.o \
+DiagramWidget.o \
+DataView.o \
+FileManager.o \
+ConverterInterface.o \
+F1_2020_Converter.o \
+DbFile.o \
+EventManager.o \
+EventParam.o \
+FileNotFoundException.o FileOpenErrorException.o SQLErrorException.o \
+NotFoundException.o sqlite3.o 
 objects_converter = main.o ConverterInterface.o F1_2020_Converter.o SampleGenerator.o FileNotFoundException.o SQLErrorException.o sqlite3.o 
 CPPFLAGS += `wx-config --cxxflags` 
 #-g
@@ -18,6 +29,8 @@ ConverterInterface.o: src/data/ConverterInterface.cpp
 F1_2020_Converter.o: src/data/F1_2020_Converter.cpp
 SampleGenerator.o: src/data/SampleGenerator.cpp
 DbFile.o: src/data/DbFile.cpp
+EventManager.o: src/EventSystem/EventManager.cpp
+EventParam.o: src/EventSystem/EventParam.cpp
 FileNotFoundException.o: src/data/Exceptions/FileNotFoundException.cpp
 FileOpenErrorException.o: src/data/Exceptions/FileOpenErrorException.cpp
 SQLErrorException.o: src/data/Exceptions/SQLErrorException.cpp
@@ -34,6 +47,8 @@ clean:
 %.o: src/CustomWidgets/%.cpp
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $<
 %.o: src/data/%.cpp
+	$(CXX) $(CPPFLAGS2) $(CXXFLAGS) -c $<
+%.o: src/EventSystem/%.cpp
 	$(CXX) $(CPPFLAGS2) $(CXXFLAGS) -c $<
 %.o: src/data/Exceptions/%.cpp
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $<
