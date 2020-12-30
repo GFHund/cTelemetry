@@ -19,6 +19,10 @@ class DataView: public wxFrame{
     void OnFileOpenButton(wxCommandEvent& event);
     void OnFileCloseButton(wxCommandEvent& event);
     void OnFileOpenListSelectItem(wxCommandEvent& event);
+
     void OnFileDataListDClick(wxDataViewEvent& event);
     void OnAddAnalyseButton(wxCommandEvent& event);
+
+    void OnAnalyseDataListDClick(wxDataViewEvent& event);
+    void OnDeleteAnalyseButton(wxCommandEvent& event);
 };

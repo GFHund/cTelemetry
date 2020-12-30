@@ -16,6 +16,9 @@ BEGIN_EVENT_TABLE(DataView, wxFrame)
 	EVT_LISTBOX(XRCID("mOpenFiles"),DataView::OnFileOpenListSelectItem)
 	EVT_DATAVIEW_ITEM_ACTIVATED(XRCID("mFileDataList"), DataView::OnFileDataListDClick)
 	EVT_BUTTON(XRCID("mAddLap"),DataView::OnAddAnalyseButton)
+
+	EVT_DATAVIEW_ITEM_ACTIVATED(XRCID("mAnalyseList"), DataView::OnAnalyseDataListDClick)
+	EVT_BUTTON(XRCID("mDeleteLap"),DataView::OnDeleteAnalyseButton)
 END_EVENT_TABLE()
 
 DataView::DataView(wxWindow* parent){
@@ -163,4 +166,44 @@ void DataView::addToAnalyseTable(int row){
 	}
 	
 }
-void DataView::removeFromAnalyseTable(int row){}
+
+void DataView::OnAnalyseDataListDClick(wxDataViewEvent& event){
+	wxDataViewItem item = event.GetItem();
+	wxDataViewListCtrl* AnalyseDataList = XRCCTRL(*this, "mAnalyseList", wxDataViewListCtrl);
+	
+	int row = AnalyseDataList->ItemToRow(item);
+	removeFromAnalyseTable(row);
+}
+void DataView::OnDeleteAnalyseButton(wxCommandEvent& event){
+	wxDataViewListCtrl* AnalyseDataList = XRCCTRL(*this, "mAnalyseList", wxDataViewListCtrl);
+	int selectedRow = AnalyseDataList->GetSelectedRow(); 
+	if(selectedRow != wxNOT_FOUND){
+		removeFromAnalyseTable(selectedRow);
+	}
+	else {
+		std::string message = "Please select a Row in the lower table";
+		wxString wxMessage = wxString(message);
+		wxMessageDialog* msg = new wxMessageDialog(this,wxMessage,"SQL error",wxOK|wxCENTRE|wxICON_INFORMATION);
+		msg->ShowModal();
+	}
+}
+
+void DataView::removeFromAnalyseTable(int row){
+	wxDataViewListCtrl* AnalyseDataList = XRCCTRL(*this, "mAnalyseList", wxDataViewListCtrl);
+	wxString filename = AnalyseDataList->GetTextValue(row,0);
+	wxString player = AnalyseDataList->GetTextValue(row,1);
+	wxString sLap = AnalyseDataList->GetTextValue(row,2);
+	wxString sLapTime = AnalyseDataList->GetTextValue(row,3);
+	int iLap = std::stoi(sLap.ToStdString());
+	float fLapTime = std::stof(sLapTime.ToStdString());
+	AnalyseData metaData = AnalyseData(filename.ToStdString(),player.ToStdString(),iLap,fLapTime,0);
+	if(FileManager::getInstance()->removeActiveLap(metaData)){
+		AnalyseDataList->DeleteItem(row);
+	}
+	else {
+		std::string message = "Could not delete row";
+		wxString wxMessage = wxString(message);
+		wxMessageDialog* msg = new wxMessageDialog(this,wxMessage,"SQL error",wxOK|wxCENTRE|wxICON_INFORMATION);
+		msg->ShowModal();
+	}
+}
