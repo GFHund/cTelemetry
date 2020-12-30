@@ -99,3 +99,25 @@ DbFile& FileManager::getOpenDbFileByName(std::string name){
     }
     throw NotFoundException();
 }
+bool FileManager::addActiveLap(AnalyseData lapMetaData){
+    if(this->mActiveLaps.size() > MAX_ACTIVE_LAPS){
+        return false;
+    }
+    this->mActiveLaps.push_back(lapMetaData);
+    return true;
+}
+bool FileManager::removeActiveLap(AnalyseData lapMetaData){
+    for(auto i = mActiveLaps.begin();i != mActiveLaps.end();i++){
+        if(i->compare(lapMetaData)){
+            mActiveLaps.erase(i);
+            return true;
+        }
+    }
+    return false;
+}
+int FileManager::getNumberOfActiveLaps(){
+    return this->mActiveLaps.size();
+}
+int FileManager::getMaxNumberOfActiveLaps(){
+    return MAX_ACTIVE_LAPS;
+}

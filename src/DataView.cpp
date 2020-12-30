@@ -2,7 +2,7 @@
 
 #include <wx/xrc/xmlres.h>
 #include <wx/listbox.h>
-#include <wx/dataview.h>
+
 #include <string>
 #include "data/FileManager.h"
 #include "data/Exceptions/FileNotFoundException.h"
@@ -14,6 +14,8 @@ BEGIN_EVENT_TABLE(DataView, wxFrame)
 	EVT_BUTTON(XRCID("mFileOpenButton"), DataView::OnFileOpenButton)
 	EVT_BUTTON(XRCID("mCloseFile"), DataView::OnFileCloseButton)
 	EVT_LISTBOX(XRCID("mOpenFiles"),DataView::OnFileOpenListSelectItem)
+	EVT_DATAVIEW_ITEM_ACTIVATED(XRCID("mFileDataList"), DataView::OnFileDataListDClick)
+	EVT_BUTTON(XRCID("mAddLap"),DataView::OnAddAnalyseButton)
 END_EVENT_TABLE()
 
 DataView::DataView(wxWindow* parent){
@@ -106,3 +108,59 @@ void DataView::OnFileOpenListSelectItem(wxCommandEvent& event){
 		msg->ShowModal();
 	}
 }
+
+void DataView::OnFileDataListDClick(wxDataViewEvent& event){
+	wxDataViewItem item = event.GetItem();
+	wxDataViewListCtrl* fileDataList = XRCCTRL(*this, "mFileDataList", wxDataViewListCtrl);
+	
+	int row = fileDataList->ItemToRow(item);
+	addToAnalyseTable(row);
+}
+void DataView::OnAddAnalyseButton(wxCommandEvent& event){
+	wxDataViewListCtrl* fileDataList = XRCCTRL(*this, "mFileDataList", wxDataViewListCtrl);
+	int selectedRow = fileDataList->GetSelectedRow(); 
+	if(selectedRow != wxNOT_FOUND){
+		addToAnalyseTable(selectedRow);
+	}
+	else {
+		std::string message = "Please select a Row in the upper table";
+		wxString wxMessage = wxString(message);
+		wxMessageDialog* msg = new wxMessageDialog(this,wxMessage,"SQL error",wxOK|wxCENTRE|wxICON_INFORMATION);
+		msg->ShowModal();
+	}
+}
+void DataView::addToAnalyseTable(int row){
+	wxDataViewListCtrl* fileDataList = XRCCTRL(*this, "mFileDataList", wxDataViewListCtrl);
+	wxString player = fileDataList->GetTextValue(row,0);
+	wxString sLap = fileDataList->GetTextValue(row,1);
+	wxString sLapTime = fileDataList->GetTextValue(row,2);
+	int iLap = std::stoi(sLap.ToStdString());
+	float fLapTime = std::stof(sLapTime.ToStdString());
+	
+	wxListBox* pFileOpenList = XRCCTRL(*this, "mOpenFiles", wxListBox);
+	int selectionIndex = pFileOpenList->GetSelection();
+	wxString filename = pFileOpenList->GetString(selectionIndex);
+	AnalyseData metaData = AnalyseData(filename.ToStdString(),player.ToStdString(),iLap,fLapTime,0);
+	
+	if(FileManager::getInstance()->addActiveLap(metaData)){
+		wxDataViewListCtrl* analyseDataList = XRCCTRL(*this, "mAnalyseList", wxDataViewListCtrl);
+		wxVector<wxVariant> data;
+		data.push_back(wxVariant(filename));
+		data.push_back(wxVariant(player));
+		data.push_back(wxVariant(sLap));
+		data.push_back(wxVariant(sLapTime));
+		data.push_back(wxVariant("0"));
+		analyseDataList->AppendItem(data);
+		fileDataList->UnselectRow(row);
+	}
+	else {
+		std::string message = "Could not push the lap to the analyse because it is only ";
+		message += std::to_string(FileManager::getInstance()->getMaxNumberOfActiveLaps());
+		message += " Data allowed";
+		wxString wxMessage = wxString(message);
+		wxMessageDialog* msg = new wxMessageDialog(this,wxMessage,"SQL error",wxOK|wxCENTRE|wxICON_INFORMATION);
+		msg->ShowModal();
+	}
+	
+}
+void DataView::removeFromAnalyseTable(int row){}
