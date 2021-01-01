@@ -62,7 +62,7 @@ void ConverterInterface::createLapTable(sqlite3* f1Db,sqlite3* convertedDb){
 void ConverterInterface::createLegendTable(sqlite3* convertedDb){
     //SQL CREATE TABLE
 	sqlite3_stmt* stmt;
-    std::string createSql = "CREATE TABLE IF NOT EXISTS legend(key INTEGER, propertyname TEXT)";
+    std::string createSql = "CREATE TABLE IF NOT EXISTS legend(key INTEGER, propertyname TEXT, type TEXT)";
 	if(sqlite3_prepare_v2(convertedDb,createSql.c_str(),createSql.size(),&stmt,NULL) != SQLITE_OK){
 		throw SQLErrorException(sqlite3_errmsg(convertedDb),createSql);
 	}
@@ -76,7 +76,7 @@ void ConverterInterface::createLegendTable(sqlite3* convertedDb){
 
 void ConverterInterface::insertLegendTable(sqlite3* convertedDb){
 	
-	std::string insertSql = "INSERT INTO legend (key,propertyname) VALUES (1,\"Speed\"),(2,\"throttle\"),(3,\"break\"),(4,\"steer\"),(5,\"rpm\"),(6,\"gear\"),(7,\"lap Distance\"),(8,\"lap time\"),(9,\"pos\")";
+	std::string insertSql = "INSERT INTO legend (key,propertyname,type) VALUES (1,\"Speed\",\"int\"),(2,\"throttle\",\"float\"),(3,\"break\",\"float\"),(4,\"steer\",\"float\"),(5,\"rpm\",\"int\"),(6,\"gear\",\"int\"),(7,\"lap Distance\",\"float\"),(8,\"lap time\",\"float\"),(9,\"pos\",\"vec\")";
 	sqlite3_stmt* stmt;
 	
 	//SQL Insert

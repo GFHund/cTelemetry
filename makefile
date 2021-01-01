@@ -8,6 +8,7 @@ F1_2020_Converter.o \
 DbFile.o \
 EventManager.o \
 EventParam.o \
+DiagramDataSet.o \
 FileNotFoundException.o FileOpenErrorException.o SQLErrorException.o \
 NotFoundException.o sqlite3.o 
 objects_converter = main.o ConverterInterface.o F1_2020_Converter.o SampleGenerator.o FileNotFoundException.o SQLErrorException.o sqlite3.o 
@@ -31,6 +32,7 @@ SampleGenerator.o: src/data/SampleGenerator.cpp
 DbFile.o: src/data/DbFile.cpp
 EventManager.o: src/EventSystem/EventManager.cpp
 EventParam.o: src/EventSystem/EventParam.cpp
+DiagramDataSet.o: src/data/DiagramDataSet.cpp
 FileNotFoundException.o: src/data/Exceptions/FileNotFoundException.cpp
 FileOpenErrorException.o: src/data/Exceptions/FileOpenErrorException.cpp
 SQLErrorException.o: src/data/Exceptions/SQLErrorException.cpp
