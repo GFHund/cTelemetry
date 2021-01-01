@@ -2,7 +2,8 @@
 
 #include <cfloat>
 
-DiagramDataSet::DiagramDataSet(std::vector< std::pair<float,float> > data){
+DiagramDataSet::DiagramDataSet(std::string name,std::vector< std::pair<float,float> > data){
+    mName = name;
     mData = data;
     mMaxXValue = FLT_MIN;
     mMinXValue = FLT_MAX;
@@ -39,6 +40,9 @@ float DiagramDataSet::getMaxYValue(){
 }
 float DiagramDataSet::getMinYValue(){
     return mMinYValue;
+}
+std::string DiagramDataSet::getName(){
+    return mName;
 }
 
 DiagramDataSet::Iterator::Iterator(std::vector< std::pair<float,float> >::iterator start, std::vector< std::pair<float,float> >::iterator end){

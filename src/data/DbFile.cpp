@@ -198,6 +198,6 @@ DiagramDataSet DbFile::getValues(AnalyseData metaData, int xProperties, int key)
         ret.push_back(std::pair<float,float>(xAxis,yAxis));        
     }
     sqlite3_finalize(stmt);
-    DiagramDataSet dataset = DiagramDataSet(ret);
-    return ret;
+    DiagramDataSet dataset = DiagramDataSet(metaData.getPlayer(),ret);
+    return dataset;
 }

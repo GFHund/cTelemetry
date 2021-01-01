@@ -9,6 +9,9 @@ class DiagramWidget: public wxWindow{
 
 	int mDiagramMinWidth;
     int mDiagramMinHeight;
+	bool mShowContextWindow;
+	int mMouseX;
+	int mMouseY;
 
 	std::vector<std::pair<DiagramDataSet,int>> mDataSets;
 	

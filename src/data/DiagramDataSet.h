@@ -2,6 +2,7 @@
 #define __DIAGRAM_DATA_SET__
 
 #include <vector>
+#include <string>
 class DiagramDataSet{
     private: 
         std::vector< std::pair<float,float> > mData;
@@ -9,6 +10,7 @@ class DiagramDataSet{
         float mMinXValue;
         float mMaxYValue;
         float mMinYValue;
+        std::string mName;
         class Iterator{
             private:
             std::vector< std::pair<float,float> >::iterator mStart;
@@ -27,13 +29,14 @@ class DiagramDataSet{
             float getNextY();
         }; 
     public:
-        DiagramDataSet(std::vector< std::pair<float,float> > data);
+        DiagramDataSet(std::string name, std::vector< std::pair<float,float> > data);
         Iterator getIterator();
 
         float getMaxXValue();
         float getMinXValue();
         float getMaxYValue();
         float getMinYValue();
+        std::string getName();
     
 };
 
