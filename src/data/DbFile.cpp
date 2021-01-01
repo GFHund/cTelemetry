@@ -181,11 +181,6 @@ DiagramDataSet DbFile::getValues(AnalyseData metaData, int xProperties, int key)
     sql += " AND lap_id = ";
     sql += std::to_string(lapId);
 
-    std::ofstream ofs;
-    ofs.open("Philipp.txt",std::ofstream::out |std::ofstream::app);
-    ofs << sql << std::endl;
-    ofs.close();
-
     sqlite3_stmt* stmt;
 	int ret_code;
     std::vector< std::pair<float,float> > ret;

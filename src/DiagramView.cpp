@@ -40,6 +40,7 @@ DiagramView::DiagramView(wxWindow* parent){
     // for menu items and toolbar tools will automatically get displayed
     // here.
     //CreateStatusBar( 1 );
+
     EventManager::getInstance()->subscribe("updateDiagramm",this);
 }
 

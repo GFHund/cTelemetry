@@ -64,25 +64,11 @@ void DiagramWidget::paintNow()
  * (e.g. wxPaintDC or wxClientDC) is used.
  */
 void DiagramWidget::render(wxDC&  dc)
-{
-    /*
-	bool pressedDown = false;
-    if (pressedDown)
-        dc.SetBrush( *wxRED_BRUSH );
-    else
-        dc.SetBrush( *wxGREY_BRUSH );
-    
-
-    dc.DrawRectangle( 0, 0, diagramMinWidth, diagramMinHeight );
-    dc.DrawText( "hallo Welt", 20, 15 );
-    */
-    std::ofstream ofs;
-    ofs.open("Philipp.txt",std::ofstream::out |std::ofstream::app);
+{   
     float overallMinX = FLT_MAX;
     float overallMaxX = FLT_MIN;
     float overallMinY = FLT_MAX;
     float overallMaxY = FLT_MIN;
-    std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
     for(auto i = mDataSets.begin();i != mDataSets.end();i++){
         float minX = i->first.getMinXValue();
         float maxX = i->first.getMaxXValue();
@@ -101,9 +87,7 @@ void DiagramWidget::render(wxDC&  dc)
             overallMinY = minY;
         }
     }
-    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-
-    ofs << "Time 1: " << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() << std::endl;
+    
     int originalWidth = mDiagramMinWidth - (PADDING_X * 2);
     int originalHeight = mDiagramMinHeight - (PADDING_Y * 2);
     float xValuePerPixel = originalWidth / (overallMaxX - overallMinX);
@@ -114,7 +98,6 @@ void DiagramWidget::render(wxDC&  dc)
         dc.DrawLine(0,mDiagramMinHeight/2,mDiagramMinWidth,mDiagramMinHeight/2);
         offsetY = mDiagramMinHeight/2;
     }
-    begin = std::chrono::steady_clock::now();
     for(auto i = mDataSets.begin();i != mDataSets.end();i++){
         DiagramDataSet dataSet = i->first;
         for(auto j = dataSet.getIterator();!j.isEnd();j.next()){
@@ -127,14 +110,9 @@ void DiagramWidget::render(wxDC&  dc)
             
             int x1 = j.getNextX() * xValuePerPixel + offsetX;
             int y1 = mDiagramMinHeight - j.getNextY() * yValuePerPixel - offsetY;
-            ofs << "x0: " << j.getX() << " y0: "<< j.getY() << " x1: " << j.getNextX() << " y1: " << j.getNextY() <<std::endl;
-            ofs << "xValuePerPixel: " << xValuePerPixel << " yValuePerPixel: " << yValuePerPixel << std::endl;
             dc.DrawLine(x0,y0,x1,y1);
         }
     }
-    end = std::chrono::steady_clock::now();
-    ofs << "Time 2: " << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() << std::endl;
-    ofs.close();
 }
 
 void DiagramWidget::mouseDown(wxMouseEvent& event)
