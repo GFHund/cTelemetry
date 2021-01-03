@@ -8,6 +8,8 @@
 #include <cstdint>
 #include <iostream>
 #include <fstream>
+#include <math.h>
+#include <chrono>
 
 #pragma pack(push)
 #pragma pack(1)
@@ -204,26 +206,49 @@ bool F1_2020_Converter::isFile(sqlite3* db){
 //--------------------------------------
 sqlite3* F1_2020_Converter::convert(std::string path,sqlite3* db){
     path.replace(path.size()-7,7,"intern.sqlite3");
-    sqlite3* convertedDb;
-    int rc = sqlite3_open(path.c_str(),&convertedDb);
+    sqlite3* inMemoryDb;
+    //int rc = sqlite3_open(path.c_str(),&convertedDb);
+	int rc = sqlite3_open(":memory:",&inMemoryDb);
     if(rc){
         sqlite3_close(db);
         throw FileNotFoundException(path);
     }
     try{
 		
-        this->createFileInfoTable(convertedDb);
-		this->insertFileInfoTable(convertedDb);
+        this->createFileInfoTable(inMemoryDb);
+		this->insertFileInfoTable(inMemoryDb);
 
-        this->createDriversTable(db, convertedDb);
-		this->insertDriversTable(db, convertedDb);
+        this->createDriversTable(db, inMemoryDb);
+		this->insertDriversTable(db, inMemoryDb);
 
-        this->createLapTable(db, convertedDb);
-		this->insertLapTable(db, convertedDb);
+        this->createLapTable(db, inMemoryDb);
+		this->insertLapTable(db, inMemoryDb);
 
-        this->createLegendTable(convertedDb);
-		this->insertLegendTable(convertedDb);
-        this->createDataTables(db, convertedDb);
+        this->createLegendTable(inMemoryDb);
+		this->insertLegendTable(inMemoryDb);
+        this->createDataTables(db, inMemoryDb);
+
+		sqlite3* convertedDb;
+		int rc = sqlite3_open(path.c_str(),&convertedDb);
+		if(rc){
+			sqlite3_close(convertedDb);
+			sqlite3_close(inMemoryDb);
+			throw FileNotFoundException(path);
+		}
+		sqlite3_backup *pBackup;
+		pBackup = sqlite3_backup_init(convertedDb, "main", inMemoryDb, "main");
+		if( pBackup ){
+			(void)sqlite3_backup_step(pBackup, -1);
+			(void)sqlite3_backup_finish(pBackup);
+			sqlite3_close(inMemoryDb);
+		}
+		else{
+			rc = sqlite3_errcode(convertedDb);
+			if(rc != SQLITE_DONE){
+				throw SQLErrorException(sqlite3_errmsg(convertedDb));
+			}
+		}
+		
         return convertedDb;
     }catch(SQLErrorException e){
         throw e;
@@ -235,6 +260,7 @@ sqlite3* F1_2020_Converter::convert(std::string path,sqlite3* db){
 
 //--------------------------------------
 void F1_2020_Converter::insertDriversTable(sqlite3* f1Db,sqlite3* convertedDb){
+	std::cout << "=================== Insert Driver Table ======================" << std::endl;
     sqlite3_stmt* stmt;
 	int ret_code;
 
@@ -276,13 +302,14 @@ void F1_2020_Converter::insertDriversTable(sqlite3* f1Db,sqlite3* convertedDb){
 }
 //--------------------------------------
 void F1_2020_Converter::insertLapTable(sqlite3* f1Db,sqlite3* convertedDb){
+	std::cout << "=================== Insert Lap Table ======================" << std::endl;
 	sqlite3_stmt* stmt;
 	int ret_code;
 	
 	std::string insertSql = "INSERT INTO lap(driver,lap_number,lap_time) VALUES ";
 	std::string selectSql = "SELECT packet FROM packets WHERE packetID = 2 GROUP BY frameIdentifier ORDER BY frameIdentifier";
 	if(sqlite3_prepare_v2(f1Db,selectSql.c_str(),selectSql.size(),&stmt,NULL) != SQLITE_OK){
-		throw SQLErrorException(sqlite3_errmsg(convertedDb),selectSql);
+		throw SQLErrorException(sqlite3_errmsg(f1Db),selectSql);
 	}
 	struct lapData{
 		int driver;
@@ -321,16 +348,20 @@ void F1_2020_Converter::insertLapTable(sqlite3* f1Db,sqlite3* convertedDb){
 
 	for(int i=0;i<22;i++){
 		for(auto iter=insertLapData[i].begin();iter != insertLapData[i].end();iter++){
+			if(isnan(iter->lapTime)){
+				continue;
+			}
 			if((i == 0 && iter != insertLapData[i].begin()) || i != 0){
 				insertSql += ",";
 			}
+			
 			insertSql += "(";
 			insertSql += std::to_string(i+1);
 			insertSql += ",";
 			insertSql += std::to_string(iter->lapNumber);
 			insertSql += ",";
 			insertSql += std::to_string(iter->lapTime);
-			insertSql += ")";
+			insertSql += ")\n";
 		}
 	}
 
@@ -361,6 +392,7 @@ void F1_2020_Converter::createDataTables(sqlite3* f1Db,sqlite3* convertedDb){
 }
 //--------------------------------------
 void F1_2020_Converter::insertReferenceDataTable(sqlite3*f1Db,sqlite3* convertedDb){
+	std::cout << "=================== Insert Reference Data Table ======================" << std::endl;
 	sqlite3_stmt* stmt;
 	int ret_code;
 
@@ -371,9 +403,11 @@ void F1_2020_Converter::insertReferenceDataTable(sqlite3*f1Db,sqlite3* converted
 		throw SQLErrorException(sqlite3_errmsg(f1Db),selectSql);
 	}
 	bool bFirst = true;
-	std::ofstream ofs;
-	ofs.open("Philipp.txt");
+	int rows = sqlite3_data_count(stmt); 
+	std::cout << "ReferenceTable: Total Rows: " << rows << std::endl;
 	int numData = 0;
+	int iNumberInserts = 0;
+	std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
 	while((ret_code = sqlite3_step(stmt)) == SQLITE_ROW){
 		PacketLapData* lapData = (PacketLapData*)sqlite3_column_blob(stmt,0);
 		for(int i=0;i<22;i++){
@@ -395,10 +429,12 @@ void F1_2020_Converter::insertReferenceDataTable(sqlite3*f1Db,sqlite3* converted
 			selectConvertDb += " AND lap_number = ";
 			selectConvertDb += std::to_string(lapData->m_lapData[i].m_currentLapNum);
 			sqlite3_stmt* stmt2;
+			
 			if(sqlite3_prepare_v2(convertedDb,selectConvertDb.c_str(),selectConvertDb.size(),&stmt2,NULL) != SQLITE_OK){
 				throw SQLErrorException(sqlite3_errmsg(convertedDb),selectConvertDb);
 			}
 			int ret_code2 = sqlite3_step(stmt2);
+			
 			char* sFrameIdentifier = lapData->m_header.m_frameIdentifier;
 			int* iFrameIdentifier = (int*)sFrameIdentifier;
 			if(ret_code2 == SQLITE_ROW){
@@ -420,15 +456,23 @@ void F1_2020_Converter::insertReferenceDataTable(sqlite3*f1Db,sqlite3* converted
 				insertSql += std::to_string(*iFrameIdentifier);
 				insertSql += ",";
 				insertSql += std::to_string(lapData->m_lapData[i].m_currentLapInvalid);
-				insertSql += ")";
+				insertSql += ")\n";
 				numData++;
 				if(numData > 1000){
-					ofs << insertSql << std::endl;
+					std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+					std::cout << "ReferenceTable: Select Statment" << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() << " microseconds" << std::endl;
+
+					iNumberInserts++;
+					std::cout << "ReferenceTable: " << rows << "/" << iNumberInserts << std::endl;
+
 					sqlite3_stmt* stmt3;
+					begin = std::chrono::steady_clock::now();
 					if(sqlite3_prepare_v2(convertedDb,insertSql.c_str(),insertSql.size(),&stmt3,NULL) != SQLITE_OK){
 						throw SQLErrorException(sqlite3_errmsg(convertedDb),insertSql);
 					}
 					int ret_code3 = sqlite3_step(stmt3);
+					end = std::chrono::steady_clock::now();
+					std::cout << "ReferenceTable: Insert Statment" << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() << " microseconds" << std::endl;
 					sqlite3_finalize(stmt3);
 					if(!(ret_code3 == SQLITE_DONE || ret_code3 == SQLITE_OK)){
 						throw SQLErrorException(sqlite3_errmsg(convertedDb),insertSql);
@@ -436,16 +480,17 @@ void F1_2020_Converter::insertReferenceDataTable(sqlite3*f1Db,sqlite3* converted
 					insertSql = "INSERT INTO reference_unit(lap_id, lap_distance, lap_time, session_time, frame_identifier,lap_invalid) VALUES ";
 					numData = 0;
 					bFirst = true;
+					begin = std::chrono::steady_clock::now();
 				}
 			}
 			sqlite3_finalize(stmt2);
 		}
-		//ofs << "------------------------------------------------" << std::endl;
+		
 	}
 	sqlite3_finalize(stmt);
 
-	ofs << insertSql << std::endl;
-	ofs.close();
+	
+	
 
 	if(numData > 0){
 		if(sqlite3_prepare_v2(convertedDb,insertSql.c_str(),insertSql.size(),&stmt,NULL) != SQLITE_OK){
@@ -460,76 +505,95 @@ void F1_2020_Converter::insertReferenceDataTable(sqlite3*f1Db,sqlite3* converted
 	}
 
 }
+
 //--------------------------------------
-void F1_2020_Converter::insertFloatDataTable(sqlite3* f1Db,sqlite3* convertedDb){
+void F1_2020_Converter::insertFloatDataTable(sqlite3* f1Db, sqlite3* convertedDb){
+	std::cout << "=================== Insert Float Data Table ======================" << std::endl;
 	sqlite3_stmt* stmt;
 	int ret_code;
 
 	std::string insertSql = "INSERT INTO float_data(reference_unit_id, property_id, float_val) VALUES ";
-	std::string convertedSelect = "SELECT ref.id, ref.frame_identifier, l.driver FROM reference_unit ref INNER JOIN lap l ON l.id = ref.lap_id";
-	if(sqlite3_prepare_v2(convertedDb,convertedSelect.c_str(),convertedSelect.size(),&stmt,NULL) != SQLITE_OK){
-		throw SQLErrorException(sqlite3_errmsg(convertedDb),convertedSelect);
+	std::string selectPacketSql = "SELECT packet FROM packets WHERE packetId = 6";
+	if(sqlite3_prepare_v2(f1Db,selectPacketSql.c_str(),selectPacketSql.size(),&stmt,NULL) != SQLITE_OK){
+		throw SQLErrorException(sqlite3_errmsg(f1Db),selectPacketSql);
 	}
+	int rows = sqlite3_data_count(stmt) ;
+	std::cout << "Float Data Table: Total Rows: " << rows << std::endl;
+	int iNumberInserts = 0;
 	bool bFirst = true;
 	int numData = 0;
+
+	std::string convertedSelect = "SELECT ref.id FROM reference_unit ref INNER JOIN lap l ON l.id = ref.lap_id WHERE ref.frame_identifier = @frameIdentifier AND l.driver = @driver";
+	sqlite3_stmt* stmt2;
+	if(sqlite3_prepare_v2(convertedDb,convertedSelect.c_str(),convertedSelect.size(),&stmt2,NULL) != SQLITE_OK){
+		throw SQLErrorException(sqlite3_errmsg(convertedDb),convertedSelect);
+	}
+
+	std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+	
 	while((ret_code = sqlite3_step(stmt)) == SQLITE_ROW){
-		int id = sqlite3_column_int(stmt,0);
-		int frameIdentifier = sqlite3_column_int(stmt,1);
-		int driverId = sqlite3_column_int(stmt,2);
-		if(driverId < 0 || driverId >= 22){
-			continue;
-		}
-		std::string selectPacketSql = "SELECT packet FROM packets WHERE packetId = 6 AND frameIdentifier = ";
-		selectPacketSql += std::to_string(frameIdentifier);
+		PacketCarTelemetryData* telemetryData = (PacketCarTelemetryData*) sqlite3_column_blob(stmt,0);
+		for(int i=0;i<22;i++){
+			int* iFrameIdentifier = (int*)telemetryData->m_header.m_frameIdentifier;
+			
+			sqlite3_bind_int(stmt2,1,*iFrameIdentifier);
+			sqlite3_bind_int(stmt2,2,i+1);
+			
+			int ret_code2 = sqlite3_step(stmt2);
+			
+			if(ret_code2 == SQLITE_ROW){
+				float steer = telemetryData->m_carTelemetryData[i].m_steer;
+				float throttle = telemetryData->m_carTelemetryData[i].m_throttle;
+				float breakValue = telemetryData->m_carTelemetryData[i].m_brake;
+				int id = sqlite3_column_int(stmt2,0);
 
-		sqlite3_stmt* stmt2;
-		if(sqlite3_prepare_v2(f1Db,selectPacketSql.c_str(),selectPacketSql.size(),&stmt2,NULL) != SQLITE_OK){
-			throw SQLErrorException(sqlite3_errmsg(f1Db),selectPacketSql);
-		}
-		int ret_code2 = sqlite3_step(stmt2);
-		if(ret_code2 == SQLITE_ROW){
-			PacketCarTelemetryData* telemetryData = (PacketCarTelemetryData*) sqlite3_column_blob(stmt2,0);
-			float steer = telemetryData->m_carTelemetryData[driverId].m_steer;
-			float throttle = telemetryData->m_carTelemetryData[driverId].m_throttle;
-			float breakValue = telemetryData->m_carTelemetryData[driverId].m_brake;
-
-			if(bFirst){
-				bFirst = false;
-			}
-			else {
-				insertSql += ",";
-			}
-			insertSql += "(";
-			insertSql += std::to_string(id);
-			insertSql += ",4,";
-			insertSql += std::to_string(steer);
-			insertSql += "),(";
-			insertSql += std::to_string(id);
-			insertSql += ",2,";
-			insertSql += std::to_string(throttle);
-			insertSql += "),(";
-			insertSql += std::to_string(id);
-			insertSql += ",3,";
-			insertSql += std::to_string(breakValue);
-			insertSql += ")";
-			numData++;
-			if(numData > 1000){
-				sqlite3_stmt* stmt3;
-				if(sqlite3_prepare_v2(convertedDb,insertSql.c_str(),insertSql.size(),&stmt3,NULL) != SQLITE_OK){
-					throw SQLErrorException(sqlite3_errmsg(convertedDb),insertSql);
+				if(bFirst){
+					bFirst = false;
 				}
-				int ret_code3 = sqlite3_step(stmt3);
-				sqlite3_finalize(stmt3);
-				if(!(ret_code3 == SQLITE_DONE || ret_code3 == SQLITE_OK)){
-					throw SQLErrorException(sqlite3_errmsg(convertedDb),insertSql);
+				else {
+					insertSql += ",";
 				}
-				numData = 0;
-				insertSql = "INSERT INTO float_data(reference_unit_id, property_id, float_val) VALUES ";
-				bFirst = true;
-			}
-		}
+				insertSql += "(";
+				insertSql += std::to_string(id);
+				insertSql += ",4,";
+				insertSql += std::to_string(steer);
+				insertSql += "),(";
+				insertSql += std::to_string(id);
+				insertSql += ",2,";
+				insertSql += std::to_string(throttle);
+				insertSql += "),(";
+				insertSql += std::to_string(id);
+				insertSql += ",3,";
+				insertSql += std::to_string(breakValue);
+				insertSql += ")";
+				numData++;
+				if(numData > 1000){
+					std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+					std::cout << "Float Data Table: Select Statment" << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() << " microseconds" << std::endl;
 
-		sqlite3_finalize(stmt2);
+					iNumberInserts++;
+					std::cout << "Float Data Table: " << rows << "/" << iNumberInserts << std::endl;
+					sqlite3_stmt* stmt3;
+					begin = std::chrono::steady_clock::now();
+					if(sqlite3_prepare_v2(convertedDb,insertSql.c_str(),insertSql.size(),&stmt3,NULL) != SQLITE_OK){
+						throw SQLErrorException(sqlite3_errmsg(convertedDb),insertSql);
+					}
+					int ret_code3 = sqlite3_step(stmt3);
+					end = std::chrono::steady_clock::now();
+					std::cout << "Float Data Table: Insert Statment" << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() << " microseconds" << std::endl;
+					sqlite3_finalize(stmt3);
+					if(!(ret_code3 == SQLITE_DONE || ret_code3 == SQLITE_OK)){
+						throw SQLErrorException(sqlite3_errmsg(convertedDb),insertSql);
+					}
+					numData = 0;
+					insertSql = "INSERT INTO float_data(reference_unit_id, property_id, float_val) VALUES ";
+					bFirst = true;
+					begin = std::chrono::steady_clock::now();
+				}
+			}
+			sqlite3_clear_bindings(stmt2);
+			sqlite3_reset(stmt2);
+		}
 	}
 	sqlite3_finalize(stmt);
 
@@ -544,76 +608,91 @@ void F1_2020_Converter::insertFloatDataTable(sqlite3* f1Db,sqlite3* convertedDb)
 }
 //--------------------------------------
 void F1_2020_Converter::insertIntDataTable(sqlite3*f1Db,sqlite3* convertedDb){
+	std::cout << "=================== Insert Int Data Table ======================" << std::endl;
 	sqlite3_stmt* stmt;
 	int ret_code;
 
 	std::string insertSql = "INSERT INTO int_data(reference_unit_id, property_id, int_val) VALUES ";
-	std::string convertedSelect = "SELECT ref.id, ref.frame_identifier, l.driver FROM reference_unit ref INNER JOIN lap l ON l.id = ref.lap_id";
-	if(sqlite3_prepare_v2(convertedDb,convertedSelect.c_str(),convertedSelect.size(),&stmt,NULL) != SQLITE_OK){
-		throw SQLErrorException(sqlite3_errmsg(convertedDb),convertedSelect);
+	std::string selectPacketSql = "SELECT packet FROM packets WHERE packetId = 6";
+	if(sqlite3_prepare_v2(f1Db,selectPacketSql.c_str(),selectPacketSql.size(),&stmt,NULL) != SQLITE_OK){
+		throw SQLErrorException(sqlite3_errmsg(convertedDb),selectPacketSql);
 	}
+	int rows = sqlite3_data_count(stmt) ;
+	std::cout << "Int Data Table: Total Rows: " << rows << std::endl;
+	int iNumberInserts = 0;
 	bool bFirst = true;
 	int numData = 0;
+
+	std::string convertedSelect = "SELECT ref.id FROM reference_unit ref INNER JOIN lap l ON l.id = ref.lap_id WHERE ref.frame_identifier = @frameIdentifier AND l.driver = @driver";
+	sqlite3_stmt* stmt2;
+	if(sqlite3_prepare_v2(convertedDb,convertedSelect.c_str(),convertedSelect.size(),&stmt2,NULL) != SQLITE_OK){
+		throw SQLErrorException(sqlite3_errmsg(convertedDb),convertedSelect);
+	}
+
+	std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
 	while((ret_code = sqlite3_step(stmt)) == SQLITE_ROW){
-		int id = sqlite3_column_int(stmt,0);
-		int frameIdentifier = sqlite3_column_int(stmt,1);
-		int driverId = sqlite3_column_int(stmt,2);
-		if(driverId < 0 || driverId >= 22){
-			continue;
-		}
-		std::string selectPacketSql = "SELECT packet FROM packets WHERE packetId = 6 AND frameIdentifier = ";
-		selectPacketSql += std::to_string(frameIdentifier);
+		PacketCarTelemetryData* telemetryData = (PacketCarTelemetryData*) sqlite3_column_blob(stmt,0);
+		for(int i=0;i<22;i++){
+			int* iFrameIdentifier = (int*)telemetryData->m_header.m_frameIdentifier;
+			
+			sqlite3_bind_int(stmt2,1,*iFrameIdentifier);
+			sqlite3_bind_int(stmt2,2,i+1);
+			
+			int ret_code2 = sqlite3_step(stmt2);
+			
+			if(ret_code2 == SQLITE_ROW){
+				float steer = telemetryData->m_carTelemetryData[i].m_steer;
+				float throttle = telemetryData->m_carTelemetryData[i].m_throttle;
+				float breakValue = telemetryData->m_carTelemetryData[i].m_brake;
+				int id = sqlite3_column_int(stmt2,0);
 
-		sqlite3_stmt* stmt2;
-		if(sqlite3_prepare_v2(f1Db,selectPacketSql.c_str(),selectPacketSql.size(),&stmt2,NULL) != SQLITE_OK){
-			throw SQLErrorException(sqlite3_errmsg(f1Db),selectPacketSql);
-		}
-		int ret_code2 = sqlite3_step(stmt2);
-		if(ret_code2 == SQLITE_ROW){
-			PacketCarTelemetryData* telemetryData = (PacketCarTelemetryData*) sqlite3_column_blob(stmt2,0);
-			int speed = telemetryData->m_carTelemetryData[driverId].m_speed;
-			int rpm = telemetryData->m_carTelemetryData[driverId].m_engineRPM;
-			int gear = telemetryData->m_carTelemetryData[driverId].m_gear;
-
-			if(bFirst){
-				bFirst = false;
-			}
-			else {
-				insertSql += ",";
-			}
-			insertSql += "(";
-			insertSql += std::to_string(id);
-			insertSql += ",1,";
-			insertSql += std::to_string(speed);
-			insertSql += "),(";
-			insertSql += std::to_string(id);
-			insertSql += ",5,";
-			insertSql += std::to_string(rpm);
-			insertSql += "),(";
-			insertSql += std::to_string(id);
-			insertSql += ",6,";
-			insertSql += std::to_string(gear);
-			insertSql += ")";
-			numData++;
-			if(numData > 1000){
-				sqlite3_stmt* stmt3;
-				if(sqlite3_prepare_v2(convertedDb,insertSql.c_str(),insertSql.size(),&stmt3,NULL) != SQLITE_OK){
-					throw SQLErrorException(sqlite3_errmsg(convertedDb),insertSql);
+				if(bFirst){
+					bFirst = false;
 				}
-				int ret_code3 = sqlite3_step(stmt3);
-				sqlite3_finalize(stmt3);
-				if(!(ret_code3 == SQLITE_DONE || ret_code3 == SQLITE_OK)){
-					throw SQLErrorException(sqlite3_errmsg(convertedDb),insertSql);
+				else {
+					insertSql += ",";
 				}
-				numData = 0;
-				insertSql = "INSERT INTO int_data(reference_unit_id, property_id, int_val) VALUES ";
-				bFirst = true;
+				insertSql += "(";
+				insertSql += std::to_string(id);
+				insertSql += ",4,";
+				insertSql += std::to_string(steer);
+				insertSql += "),(";
+				insertSql += std::to_string(id);
+				insertSql += ",2,";
+				insertSql += std::to_string(throttle);
+				insertSql += "),(";
+				insertSql += std::to_string(id);
+				insertSql += ",3,";
+				insertSql += std::to_string(breakValue);
+				insertSql += ")";
+				numData++;
+				if(numData > 1000){
+					std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+					std::cout << "Int Data Table: Select Statment" << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() << " microseconds" << std::endl;
+
+					iNumberInserts++;
+					std::cout << "Int Data Table: " << rows << "/" << iNumberInserts << std::endl;
+					sqlite3_stmt* stmt3;
+					begin = std::chrono::steady_clock::now();
+					if(sqlite3_prepare_v2(convertedDb,insertSql.c_str(),insertSql.size(),&stmt3,NULL) != SQLITE_OK){
+						throw SQLErrorException(sqlite3_errmsg(convertedDb),insertSql);
+					}
+					int ret_code3 = sqlite3_step(stmt3);
+					end = std::chrono::steady_clock::now();
+					std::cout << "Int Data Table: Insert Statment" << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() << " microseconds" << std::endl;
+					sqlite3_finalize(stmt3);
+					if(!(ret_code3 == SQLITE_DONE || ret_code3 == SQLITE_OK)){
+						throw SQLErrorException(sqlite3_errmsg(convertedDb),insertSql);
+					}
+					numData = 0;
+					insertSql = "INSERT INTO int_data(reference_unit_id, property_id, int_val) VALUES ";
+					bFirst = true;
+					begin = std::chrono::steady_clock::now();
+				}
 			}
+			sqlite3_clear_bindings(stmt2);
+			sqlite3_reset(stmt2);
 		}
-
-
-
-		sqlite3_finalize(stmt2);
 	}
 	sqlite3_finalize(stmt);
 
@@ -628,72 +707,89 @@ void F1_2020_Converter::insertIntDataTable(sqlite3*f1Db,sqlite3* convertedDb){
 }
 //--------------------------------------
 void F1_2020_Converter::insertVec3DataTable(sqlite3*f1Db,sqlite3* convertedDb){
+	std::cout << "=================== Insert Vec Data Table ======================" << std::endl;
 	sqlite3_stmt* stmt;
 	int ret_code;
 
 	std::string insertSql = "INSERT INTO vec_data(reference_unit_id, property_id, x_val,y_val,z_val) VALUES ";
-	std::string convertedSelect = "SELECT ref.id, ref.frame_identifier, l.driver FROM reference_unit ref INNER JOIN lap l ON l.id = ref.lap_id";
-	if(sqlite3_prepare_v2(convertedDb,convertedSelect.c_str(),convertedSelect.size(),&stmt,NULL) != SQLITE_OK){
-		throw SQLErrorException(sqlite3_errmsg(convertedDb),convertedSelect);
+	std::string selectPacketSql = "SELECT packet FROM packets WHERE packetId = 0";
+	if(sqlite3_prepare_v2(f1Db,selectPacketSql.c_str(),selectPacketSql.size(),&stmt,NULL) != SQLITE_OK){
+		throw SQLErrorException(sqlite3_errmsg(convertedDb),selectPacketSql);
 	}
+	int rows = sqlite3_data_count(stmt) ;
+	std::cout << "Vec Data Table: Total Rows: " << rows << std::endl;
+	int iNumberInserts = 0;
 	bool bFirst = true;
 	int numData = 0;
+
+	std::string convertedSelect = "SELECT ref.id FROM reference_unit ref INNER JOIN lap l ON l.id = ref.lap_id WHERE ref.frame_identifier = @frameIdentifier AND l.driver = @driver";
+	sqlite3_stmt* stmt2;
+	if(sqlite3_prepare_v2(convertedDb,convertedSelect.c_str(),convertedSelect.size(),&stmt2,NULL) != SQLITE_OK){
+		throw SQLErrorException(sqlite3_errmsg(convertedDb),convertedSelect);
+	}
+
+	std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
 	while((ret_code = sqlite3_step(stmt)) == SQLITE_ROW){
-		int id = sqlite3_column_int(stmt,0);
-		int frameIdentifier = sqlite3_column_int(stmt,1);
-		int driverId = sqlite3_column_int(stmt,2);
-		if(driverId < 0 || driverId >= 22){
-			continue;
-		}
-		std::string selectPacketSql = "SELECT packet FROM packets WHERE packetId = 0 AND frameIdentifier = ";
-		selectPacketSql += std::to_string(frameIdentifier);
+		PacketMotionData* motionData = (PacketMotionData*) sqlite3_column_blob(stmt,0);
 
-		sqlite3_stmt* stmt2;
-		if(sqlite3_prepare_v2(f1Db,selectPacketSql.c_str(),selectPacketSql.size(),&stmt2,NULL) != SQLITE_OK){
-			throw SQLErrorException(sqlite3_errmsg(f1Db),selectPacketSql);
-		}
-		int ret_code2 = sqlite3_step(stmt2);
-		if(ret_code2 == SQLITE_ROW){
-			PacketMotionData* motionData = (PacketMotionData*) sqlite3_column_blob(stmt2,0);
-			float posX = motionData->m_carMotionData[driverId].m_worldPositionX;
-			float posY = motionData->m_carMotionData[driverId].m_worldPositionY;
-			float posZ = motionData->m_carMotionData[driverId].m_worldPositionZ;
+		for(int i=0;i<22;i++){
+			int* iFrameIdentifier = (int*)motionData->m_header.m_frameIdentifier;
+			
+			sqlite3_bind_int(stmt2,1,*iFrameIdentifier);
+			sqlite3_bind_int(stmt2,2,i+1);
+			
+			int ret_code2 = sqlite3_step(stmt2);
+			
+			if(ret_code2 == SQLITE_ROW){
+				float posX = motionData->m_carMotionData[i].m_worldPositionX;
+				float posY = motionData->m_carMotionData[i].m_worldPositionY;
+				float posZ = motionData->m_carMotionData[i].m_worldPositionZ;
+				int id = sqlite3_column_int(stmt2,0);
 
-			if(bFirst){
-				bFirst = false;
-			}
-			else {
+				if(bFirst){
+					bFirst = false;
+				}
+				else {
+					insertSql += ",";
+				}
+				insertSql += "(";
+				insertSql += std::to_string(id);
+				insertSql += ",1,";
+				insertSql += std::to_string(posX);
 				insertSql += ",";
-			}
-			insertSql += "(";
-			insertSql += std::to_string(id);
-			insertSql += ",1,";
-			insertSql += std::to_string(posX);
-			insertSql += ",";
-			insertSql += std::to_string(posY);
-			insertSql += ",";
-			insertSql += std::to_string(posZ);
-			insertSql += ")";
-			numData++;
-			if(numData > 1000){
-				sqlite3_stmt* stmt3;
-				if(sqlite3_prepare_v2(convertedDb,insertSql.c_str(),insertSql.size(),&stmt3,NULL) != SQLITE_OK){
-					throw SQLErrorException(sqlite3_errmsg(convertedDb),insertSql);
+				insertSql += std::to_string(posY);
+				insertSql += ",";
+				insertSql += std::to_string(posZ);
+				insertSql += ")";
+				numData++;
+				if(numData > 1000){
+					std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+					std::cout << "Vec Data Table: Select Statment" << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() << " microseconds" << std::endl;
+
+					iNumberInserts++;
+					std::cout << "Vec Data Table: " << rows << "/" << iNumberInserts << std::endl;
+					sqlite3_stmt* stmt3;
+					begin = std::chrono::steady_clock::now();
+					if(sqlite3_prepare_v2(convertedDb,insertSql.c_str(),insertSql.size(),&stmt3,NULL) != SQLITE_OK){
+						throw SQLErrorException(sqlite3_errmsg(convertedDb),insertSql);
+					}
+					int ret_code3 = sqlite3_step(stmt3);
+					end = std::chrono::steady_clock::now();
+					std::cout << "Vec Data Table: Insert Statment" << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() << " microseconds" << std::endl;
+					sqlite3_finalize(stmt3);
+					if(!(ret_code3 == SQLITE_DONE || ret_code3 == SQLITE_OK)){
+						throw SQLErrorException(sqlite3_errmsg(convertedDb),insertSql);
+					}
+					numData = 0;
+					insertSql = "INSERT INTO vec_data(reference_unit_id, property_id, x_val,y_val,z_val) VALUES ";
+					bFirst = true;
+					begin = std::chrono::steady_clock::now();
 				}
-				int ret_code3 = sqlite3_step(stmt3);
-				sqlite3_finalize(stmt3);
-				if(!(ret_code3 == SQLITE_DONE || ret_code3 == SQLITE_OK)){
-					throw SQLErrorException(sqlite3_errmsg(convertedDb),insertSql);
-				}
-				numData = 0;
-				insertSql = "INSERT INTO vec_data(reference_unit_id, property_id, x_val,y_val,z_val) VALUES ";
-				bFirst = true;
 			}
+			sqlite3_clear_bindings(stmt2);
+			sqlite3_reset(stmt2);
 		}
-
-
-
-		sqlite3_finalize(stmt2);
+		
 	}
 	sqlite3_finalize(stmt);
 

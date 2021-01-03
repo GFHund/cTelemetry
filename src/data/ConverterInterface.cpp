@@ -57,6 +57,16 @@ void ConverterInterface::createLapTable(sqlite3* f1Db,sqlite3* convertedDb){
 	if(ret_code != SQLITE_DONE){
 		throw SQLErrorException(sqlite3_errmsg(convertedDb),createSql);
 	}
+
+	std::string indexSql = "CREATE INDEX IF NOT EXISTS lap_index ON lap(driver)";
+	if(sqlite3_prepare_v2(convertedDb,indexSql.c_str(),indexSql.size(),&stmt,NULL) != SQLITE_OK){
+		throw SQLErrorException(sqlite3_errmsg(convertedDb),indexSql);
+	}
+	ret_code = sqlite3_step(stmt);
+	sqlite3_finalize(stmt);
+	if(ret_code != SQLITE_DONE){
+		throw SQLErrorException(sqlite3_errmsg(convertedDb),indexSql);
+	}
 }
 
 void ConverterInterface::createLegendTable(sqlite3* convertedDb){
@@ -102,6 +112,16 @@ void ConverterInterface::createReferenceDataTable(sqlite3* f1Db,sqlite3* convert
 	sqlite3_finalize(stmt);
 	if(ret_code != SQLITE_DONE){
 		throw SQLErrorException(sqlite3_errmsg(convertedDb),createSql);
+	}
+
+	std::string indexSql = "CREATE INDEX IF NOT EXISTS ref_unit_index ON reference_unit(lap_id,frame_identifier)";
+	if(sqlite3_prepare_v2(convertedDb,indexSql.c_str(),indexSql.size(),&stmt,NULL) != SQLITE_OK){
+		throw SQLErrorException(sqlite3_errmsg(convertedDb),indexSql);
+	}
+	ret_code = sqlite3_step(stmt);
+	sqlite3_finalize(stmt);
+	if(ret_code != SQLITE_DONE){
+		throw SQLErrorException(sqlite3_errmsg(convertedDb),indexSql);
 	}
 }
 
