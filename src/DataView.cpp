@@ -66,6 +66,7 @@ void DataView::OnFileOpenButton(wxCommandEvent& event){
 
 	std::vector<std::string> fileNames = FileManager::getInstance()->getOpenFiles();
 	std::vector<wxString> wxFileNames;
+	wxFileNames.clear();
 	for(auto i=fileNames.begin();i!= fileNames.end();i++){
 		wxFileNames.push_back(wxString(*i));
 	}

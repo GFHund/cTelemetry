@@ -77,6 +77,7 @@ void DiagramView::OnProperiesListClicked(wxCommandEvent& event){
             DiagramDataSet data = FileManager::getInstance()
                 ->getOpenDbFileByName(metaData.getFilename()).getValues(metaData,0,selectionString.ToStdString());
             DiagramWidget* diagramWidget = XRCCTRL (*this,"mDiagram",DiagramWidget);
+            diagramWidget->clearXyDataset();
             diagramWidget->addXyDataset(data,metaData.getColor());
         }catch(NotFoundException e){
             std::string message = "Not Found Exception";

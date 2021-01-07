@@ -425,7 +425,7 @@ void F1_2020_Converter::insertReferenceDataTable(sqlite3*f1Db,sqlite3* converted
 			*/
 
 			std::string selectConvertDb = "SELECT id FROM lap WHERE driver = ";
-			selectConvertDb += std::to_string(i);
+			selectConvertDb += std::to_string(i+1);
 			selectConvertDb += " AND lap_number = ";
 			selectConvertDb += std::to_string(lapData->m_lapData[i].m_currentLapNum);
 			sqlite3_stmt* stmt2;
@@ -641,9 +641,9 @@ void F1_2020_Converter::insertIntDataTable(sqlite3*f1Db,sqlite3* convertedDb){
 			int ret_code2 = sqlite3_step(stmt2);
 			
 			if(ret_code2 == SQLITE_ROW){
-				float steer = telemetryData->m_carTelemetryData[i].m_steer;
-				float throttle = telemetryData->m_carTelemetryData[i].m_throttle;
-				float breakValue = telemetryData->m_carTelemetryData[i].m_brake;
+				int speed = telemetryData->m_carTelemetryData[i].m_speed;
+				int rpm = telemetryData->m_carTelemetryData[i].m_engineRPM;
+				int gear = telemetryData->m_carTelemetryData[i].m_gear;
 				int id = sqlite3_column_int(stmt2,0);
 
 				if(bFirst){
@@ -654,16 +654,16 @@ void F1_2020_Converter::insertIntDataTable(sqlite3*f1Db,sqlite3* convertedDb){
 				}
 				insertSql += "(";
 				insertSql += std::to_string(id);
-				insertSql += ",4,";
-				insertSql += std::to_string(steer);
+				insertSql += ",1,";
+				insertSql += std::to_string(speed);
 				insertSql += "),(";
 				insertSql += std::to_string(id);
-				insertSql += ",2,";
-				insertSql += std::to_string(throttle);
+				insertSql += ",5,";
+				insertSql += std::to_string(rpm);
 				insertSql += "),(";
 				insertSql += std::to_string(id);
-				insertSql += ",3,";
-				insertSql += std::to_string(breakValue);
+				insertSql += ",6,";
+				insertSql += std::to_string(gear);
 				insertSql += ")";
 				numData++;
 				if(numData > 1000){

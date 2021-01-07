@@ -4,6 +4,7 @@
 #include <cfloat>
 #include <chrono>
 #include <fstream>
+#include <wx/dcbuffer.h>
 
 
 BEGIN_EVENT_TABLE(DiagramWidget, wxPanel)
@@ -29,6 +30,8 @@ DiagramWidget::DiagramWidget(wxFrame* parent,const wxSize& size)
     mDiagramMinHeight = size.GetHeight();
 	SetMinSize(size);
     mShowContextWindow = true;
+    mOriginalWidth = mDiagramMinWidth - (PADDING_X * 2);
+    mOriginalHeight = mDiagramMinHeight - (PADDING_Y * 2);
 }
 
 /*
@@ -40,8 +43,9 @@ DiagramWidget::DiagramWidget(wxFrame* parent,const wxSize& size)
 void DiagramWidget::paintEvent(wxPaintEvent & evt)
 {
     // depending on your system you may need to look at double-buffered dcs
-    wxPaintDC dc(this);
-    render(dc);
+    //wxPaintDC dc(this);
+    wxBufferedPaintDC bufferDc(this);
+    render(bufferDc);
 }
 
 /*
@@ -56,7 +60,8 @@ void DiagramWidget::paintNow()
 {
     // depending on your system you may need to look at double-buffered dcs
     wxClientDC dc(this);
-    render(dc);
+    wxBufferedDC bufferDc(&dc,wxSize(mDiagramMinWidth,mDiagramMinHeight));
+    render(bufferDc);
 }
 
 /*
@@ -67,41 +72,18 @@ void DiagramWidget::paintNow()
 void DiagramWidget::render(wxDC&  dc)
 {   
     dc.Clear();
-    float overallMinX = FLT_MAX;
-    float overallMaxX = FLT_MIN;
-    float overallMinY = FLT_MAX;
-    float overallMaxY = FLT_MIN;
-    for(auto i = mDataSets.begin();i != mDataSets.end();i++){
-        float minX = i->first.getMinXValue();
-        float maxX = i->first.getMaxXValue();
-        float minY = i->first.getMinYValue();
-        float maxY = i->first.getMaxYValue();
-        if(overallMaxX < maxX){
-            overallMaxX = maxX;
-        }
-        if(overallMinX > minX){
-            overallMinX = minX;
-        }
-        if(overallMaxY < maxY){
-            overallMaxY = maxY;
-        }
-        if(overallMinY > minY){
-            overallMinY = minY;
-        }
-    }
     
-    int originalWidth = mDiagramMinWidth - (PADDING_X * 2);
-    int originalHeight = mDiagramMinHeight - (PADDING_Y * 2);
-    float xValuePerPixel = originalWidth / (overallMaxX - overallMinX);
-    float yValuePerPixel = originalHeight / (overallMaxY - overallMinY);
+    //float xValuePerPixel = originalWidth / (mOverallMaxX - mOverallMinX);
+    //float yValuePerPixel = originalHeight / (mOverallMaxY - mOverallMinY);
     int offsetY = PADDING_Y;
     int offsetX = PADDING_X;
-    if(overallMinY < 0){
+    if(mOverallMinY < 0){
+        //draw the null line
         dc.DrawLine(0,mDiagramMinHeight/2,mDiagramMinWidth,mDiagramMinHeight/2);
-        offsetY = mDiagramMinHeight/2;
+        offsetY = -mOriginalHeight/2 + 20;
     }
     std::vector<std::pair<std::string,float>> yValuesAtMouse;
-    float xValueAtMouse = (mMouseX - PADDING_Y) / xValuePerPixel;
+    float xValueAtMouse = (mMouseX - PADDING_Y) / mXValuePerPixel;
     for(auto i = mDataSets.begin();i != mDataSets.end();i++){
         DiagramDataSet dataSet = i->first;
         int iColor = i->second;
@@ -114,16 +96,16 @@ void DiagramWidget::render(wxDC&  dc)
                 break;
             }
             
-            int x0 = j.getX() * xValuePerPixel + offsetX;
-            int y0 = mDiagramMinHeight - j.getY() * yValuePerPixel - offsetY;
+            int x0 = j.getX() * mXValuePerPixel + offsetX;
+            int y0 = mOriginalHeight - j.getY() * mYValuePerPixel + offsetY;
             
             if(abs(j.getX() - xValueAtMouse) < xValueDiff){
                 xValueDiff = abs(j.getX() - xValueAtMouse);
                 yValuesAtMouse[yValuesAtMouse.size()-1].second = j.getY();
             }
 
-            int x1 = j.getNextX() * xValuePerPixel + offsetX;
-            int y1 = mDiagramMinHeight - j.getNextY() * yValuePerPixel - offsetY;
+            int x1 = j.getNextX() * mXValuePerPixel + offsetX;
+            int y1 = mOriginalHeight - j.getNextY() * mYValuePerPixel + offsetY;
             dc.DrawLine(x0,y0,x1,y1);
         }
     }
@@ -195,6 +177,7 @@ void DiagramWidget::keyReleased(wxKeyEvent& event) {}
 
 void DiagramWidget::addXyDataset(DiagramDataSet dataset, int color){
     mDataSets.push_back(std::pair<DiagramDataSet,int>(dataset,color));
+    calculateOverallMinMax();
     paintNow();
 }
 void DiagramWidget::removeXyDataset(int color){
@@ -204,5 +187,51 @@ void DiagramWidget::removeXyDataset(int color){
             return;
         }
     }
+    calculateOverallMinMax();
+    paintNow();
+}
+void DiagramWidget::calculateOverallMinMax(){
+    mOverallMinX = FLT_MAX;
+    mOverallMaxX = FLT_MIN;
+    mOverallMinY = FLT_MAX;
+    mOverallMaxY = FLT_MIN;
+    for(auto i = mDataSets.begin();i != mDataSets.end();i++){
+        float minX = i->first.getMinXValue();
+        float maxX = i->first.getMaxXValue();
+        float minY = i->first.getMinYValue();
+        float maxY = i->first.getMaxYValue();
+        if(mOverallMaxX < maxX){
+            mOverallMaxX = maxX;
+        }
+        if(mOverallMinX > minX){
+            mOverallMinX = minX;
+        }
+        if(mOverallMaxY < maxY){
+            mOverallMaxY = maxY;
+        }
+        if(mOverallMinY > minY){
+            mOverallMinY = minY;
+        }
+    }
+    //std::ofstream ofs;
+    //ofs.open("Philipp.txt",std::ofstream::app| std::ofstream::out);
+    //ofs << mOverallMaxY << std::endl;
+    //ofs << mOverallMinY << std::endl;
+    
+    mXValuePerPixel = mOriginalWidth / mOverallMaxX;
+    if(mOverallMinY < 0){
+        mYValuePerPixel = mOriginalHeight / (mOverallMaxY - mOverallMinY);
+    }
+    else{
+        mYValuePerPixel = mOriginalHeight / mOverallMaxY;
+    }
+    
+    //ofs << mYValuePerPixel << std::endl;
+    //ofs.close();
+}
+void DiagramWidget::clearXyDataset(){
+    mDataSets.clear();
+    
+    calculateOverallMinMax();
     paintNow();
 }

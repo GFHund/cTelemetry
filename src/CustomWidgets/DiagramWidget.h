@@ -13,7 +13,18 @@ class DiagramWidget: public wxWindow{
 	int mMouseX;
 	int mMouseY;
 
+	float mOverallMinX;
+	float mOverallMaxX;
+	float mOverallMinY;
+	float mOverallMaxY;
+	float mXValuePerPixel;
+	float mYValuePerPixel;
+	int mOriginalWidth;
+	int mOriginalHeight;
+
 	std::vector<std::pair<DiagramDataSet,int>> mDataSets;
+
+	void calculateOverallMinMax();
 	
 	public:
 	DiagramWidget(wxFrame* parent,const wxSize& size);
@@ -33,6 +44,8 @@ class DiagramWidget: public wxWindow{
 	/*my Diagramm Functions*/
 	void addXyDataset(DiagramDataSet dataset, int color);
 	void removeXyDataset(int color);
+	void clearXyDataset();
+
 	
 	DECLARE_EVENT_TABLE();
 };
