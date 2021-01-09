@@ -34,6 +34,9 @@ class FileManager{
 	AnalyseData& getActiveLap(int index);
 	int getNumberOfActiveLaps();
 	int getMaxNumberOfActiveLaps();
+
+	unsigned int getNextColor();
+	unsigned int getColor(int index);
 	
 };
 

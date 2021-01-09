@@ -10,6 +10,7 @@
 #include "data/Exceptions/NotFoundException.h"
 #include "data/Exceptions/SQLErrorException.h"
 #include "EventSystem/EventManager.h"
+#include <fstream>
 
 BEGIN_EVENT_TABLE(DataView, wxFrame)
 	EVT_BUTTON(XRCID("mFileOpenButton"), DataView::OnFileOpenButton)
@@ -135,6 +136,8 @@ void DataView::OnAddAnalyseButton(wxCommandEvent& event){
 	}
 }
 void DataView::addToAnalyseTable(int row){
+	int color = FileManager::getInstance()->getNextColor();
+
 	wxDataViewListCtrl* fileDataList = XRCCTRL(*this, "mFileDataList", wxDataViewListCtrl);
 	wxString player = fileDataList->GetTextValue(row,0);
 	wxString sLap = fileDataList->GetTextValue(row,1);
@@ -145,7 +148,7 @@ void DataView::addToAnalyseTable(int row){
 	wxListBox* pFileOpenList = XRCCTRL(*this, "mOpenFiles", wxListBox);
 	int selectionIndex = pFileOpenList->GetSelection();
 	wxString filename = pFileOpenList->GetString(selectionIndex);
-	AnalyseData metaData = AnalyseData(filename.ToStdString(),player.ToStdString(),iLap,fLapTime,0);
+	AnalyseData metaData = AnalyseData(filename.ToStdString(),player.ToStdString(),iLap,fLapTime,color);
 	
 	if(FileManager::getInstance()->addActiveLap(metaData)){
 		wxDataViewListCtrl* analyseDataList = XRCCTRL(*this, "mAnalyseList", wxDataViewListCtrl);
@@ -154,7 +157,7 @@ void DataView::addToAnalyseTable(int row){
 		data.push_back(wxVariant(player));
 		data.push_back(wxVariant(sLap));
 		data.push_back(wxVariant(sLapTime));
-		data.push_back(wxVariant("0"));
+		data.push_back(wxVariant(std::to_string(color)));
 		analyseDataList->AppendItem(data);
 		fileDataList->UnselectRow(row);
 		EventManager::getInstance()->fireEvent("updateDiagramm");

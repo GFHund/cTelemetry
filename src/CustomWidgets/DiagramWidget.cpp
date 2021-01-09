@@ -73,8 +73,6 @@ void DiagramWidget::render(wxDC&  dc)
 {   
     dc.Clear();
     
-    //float xValuePerPixel = originalWidth / (mOverallMaxX - mOverallMinX);
-    //float yValuePerPixel = originalHeight / (mOverallMaxY - mOverallMinY);
     int offsetY = PADDING_Y;
     int offsetX = PADDING_X;
     if(mOverallMinY < 0){
@@ -84,11 +82,13 @@ void DiagramWidget::render(wxDC&  dc)
     }
     std::vector<std::pair<std::string,float>> yValuesAtMouse;
     float xValueAtMouse = (mMouseX - PADDING_Y) / mXValuePerPixel;
+    
     for(auto i = mDataSets.begin();i != mDataSets.end();i++){
         DiagramDataSet dataSet = i->first;
         int iColor = i->second;
         unsigned char* color = (unsigned char*)&iColor;
-        dc.SetBrush(wxColour(color[0],color[1],color[2],color[3]));
+        
+        dc.SetPen(wxPen(wxColour(color[0],color[1],color[2],color[3])));
         yValuesAtMouse.push_back(std::pair<std::string,float>(dataSet.getName(),0));
         float xValueDiff = FLT_MAX;
         for(auto j = dataSet.getIterator();!j.isEnd();j.next()){
@@ -109,6 +109,7 @@ void DiagramWidget::render(wxDC&  dc)
             dc.DrawLine(x0,y0,x1,y1);
         }
     }
+    dc.SetPen(wxPen(wxColour(0,0,0,255)));
     if(mShowContextWindow){
         dc.SetBrush(wxColour(255,255,255,0));
         dc.DrawLine(mMouseX,0,mMouseX,mDiagramMinHeight);
@@ -131,7 +132,10 @@ void DiagramWidget::render(wxDC&  dc)
         for(auto i = yValuesAtMouse.begin();i!=yValuesAtMouse.end();i++){
             std::string yValue =  i->first;
             yValue += ":";
-            //yValue += std::to_string(i->second);
+            
+            int iColor = mDataSets[j-1].second;
+            unsigned char* color = (unsigned char*)&iColor;
+            dc.SetTextForeground( wxColour(color[0],color[1],color[2],color[3]) );
             dc.DrawText(wxString(yValue),posX + 10, posY + 10 + j*20);
             dc.DrawText(wxString(std::to_string(i->second)),posX + 100,posY + 10 + j*20);
             j++;
@@ -141,25 +145,14 @@ void DiagramWidget::render(wxDC&  dc)
 
 void DiagramWidget::mouseDown(wxMouseEvent& event)
 {
-    //pressedDown = true;
-    paintNow();
+    //paintNow();
 }
 void DiagramWidget::mouseReleased(wxMouseEvent& event)
 {
-    //pressedDown = false;
-    paintNow();
-    
-    //wxMessageBox( wxT("You pressed a custom button") );
+    //paintNow();   
 }
 void DiagramWidget::mouseLeftWindow(wxMouseEvent& event)
 {
-	/*
-    if (pressedDown)
-    {
-        pressedDown = false;
-        paintNow();
-    }
-	*/
 }
 
 // currently unused events
@@ -213,10 +206,6 @@ void DiagramWidget::calculateOverallMinMax(){
             mOverallMinY = minY;
         }
     }
-    //std::ofstream ofs;
-    //ofs.open("Philipp.txt",std::ofstream::app| std::ofstream::out);
-    //ofs << mOverallMaxY << std::endl;
-    //ofs << mOverallMinY << std::endl;
     
     mXValuePerPixel = mOriginalWidth / mOverallMaxX;
     if(mOverallMinY < 0){
@@ -226,8 +215,6 @@ void DiagramWidget::calculateOverallMinMax(){
         mYValuePerPixel = mOriginalHeight / mOverallMaxY;
     }
     
-    //ofs << mYValuePerPixel << std::endl;
-    //ofs.close();
 }
 void DiagramWidget::clearXyDataset(){
     mDataSets.clear();

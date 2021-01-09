@@ -7,6 +7,7 @@
 #include "Exceptions/FileOpenErrorException.h"
 #include "Exceptions/NotFoundException.h"
 #include "F1_2020_Converter.h"
+#include <fstream>
 
 FileManager* FileManager::mInstance = 0;
 
@@ -100,7 +101,7 @@ DbFile& FileManager::getOpenDbFileByName(std::string name){
     throw NotFoundException();
 }
 bool FileManager::addActiveLap(AnalyseData lapMetaData){
-    if(this->mActiveLaps.size() > MAX_ACTIVE_LAPS){
+    if(this->mActiveLaps.size() >= MAX_ACTIVE_LAPS){
         return false;
     }
     this->mActiveLaps.push_back(lapMetaData);
@@ -126,4 +127,15 @@ int FileManager::getNumberOfActiveLaps(){
 }
 int FileManager::getMaxNumberOfActiveLaps(){
     return MAX_ACTIVE_LAPS;
+}
+unsigned int FileManager::getNextColor(){
+    int index = mActiveLaps.size();
+    return getColor(index);
+}
+unsigned int FileManager::getColor(int index){
+    unsigned int color[] = {0xffff0000,0xff00ff00,0xff0000ff,0xffffff00};
+    if(index >= MAX_ACTIVE_LAPS){
+        return 0;
+    }
+    return color[index];
 }

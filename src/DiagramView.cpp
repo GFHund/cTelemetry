@@ -71,13 +71,13 @@ void DiagramView::OnProperiesListClicked(wxCommandEvent& event){
     wxListBox* propertiesListCtrl = XRCCTRL(*this, "mPropertiesSelector", wxListBox);
     int selection = propertiesListCtrl->GetSelection();
     wxString selectionString = propertiesListCtrl->GetString(selection);
+    DiagramWidget* diagramWidget = XRCCTRL (*this,"mDiagram",DiagramWidget);
+    diagramWidget->clearXyDataset();
     for(int i=0;i < FileManager::getInstance()->getNumberOfActiveLaps();i++){
         try{
             AnalyseData& metaData = FileManager::getInstance()->getActiveLap(i);
             DiagramDataSet data = FileManager::getInstance()
-                ->getOpenDbFileByName(metaData.getFilename()).getValues(metaData,0,selectionString.ToStdString());
-            DiagramWidget* diagramWidget = XRCCTRL (*this,"mDiagram",DiagramWidget);
-            diagramWidget->clearXyDataset();
+                ->getOpenDbFileByName(metaData.getFilename()).getValues(metaData,0,selectionString.ToStdString());        
             diagramWidget->addXyDataset(data,metaData.getColor());
         }catch(NotFoundException e){
             std::string message = "Not Found Exception";
