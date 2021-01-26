@@ -4,16 +4,19 @@
 #include <utility>
 #include "../data/Exceptions/FileOpenErrorException.h"
 #include <fstream>
+#include <thread>
 
 DbFile::DbFile(sqlite3* db,std::string name){
     mDb = db;
     mName = name;
+    //std::thread generateYProperties;//getYProperties
 }
 DbFile::~DbFile(){
     //sqlite3_close(this->mDb);
 }
 std::string DbFile::getName(){
     return this->mName;
+    
 }
 std::vector<FileTableData> DbFile::getFileTable(){
     std::string sql = "SELECT driver.name,driver.number,lap.lap_number,lap.lap_time FROM driver INNER JOIN lap ON lap.driver = driver.id";
@@ -35,6 +38,9 @@ std::vector<FileTableData> DbFile::getFileTable(){
     return data;
 }
 std::map<int,std::string> DbFile::getYProperties(){
+    if(this->mYProperties.size() > 0){
+        return mYProperties;
+    }
     std::string sql = "SELECT legend.key, legend.propertyname FROM legend INNER JOIN float_data ON float_data.property_id = legend.key GROUP BY float_data.property_id";
     std::string sql2 = "SELECT legend.key, legend.propertyname FROM legend INNER JOIN int_data ON int_data.property_id = legend.key GROUP BY int_data.property_id";
     sqlite3_stmt* stmt;
@@ -58,6 +64,7 @@ std::map<int,std::string> DbFile::getYProperties(){
         yValues.insert(std::pair<int,std::string>(key,name));
     }
     sqlite3_finalize(stmt);
+    mYProperties = yValues;
     return yValues;
 }
 int DbFile::getKeyFromPropertiesName(std::string propertiesName){

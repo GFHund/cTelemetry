@@ -6,12 +6,15 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <thread>
 #include "DiagramDataSet.h"
 
 class DbFile{
 	private:
         sqlite3* mDb;
         std::string mName;
+        std::map<int,std::string> mYProperties;
+
         int getLapId(AnalyseData metaData);
         int getDriverId(AnalyseData metaData);
         std::string getKeyType(int key);

@@ -10,6 +10,7 @@
 #include <fstream>
 #include <math.h>
 #include <chrono>
+#include <float.h>
 
 #pragma pack(push)
 #pragma pack(1)
@@ -235,6 +236,7 @@ sqlite3* F1_2020_Converter::convert(std::string path,sqlite3* db){
 			sqlite3_close(inMemoryDb);
 			throw FileNotFoundException(path);
 		}
+		
 		sqlite3_backup *pBackup;
 		pBackup = sqlite3_backup_init(convertedDb, "main", inMemoryDb, "main");
 		if( pBackup ){
@@ -248,6 +250,7 @@ sqlite3* F1_2020_Converter::convert(std::string path,sqlite3* db){
 				throw SQLErrorException(sqlite3_errmsg(convertedDb));
 			}
 		}
+		
 		
         return convertedDb;
     }catch(SQLErrorException e){
@@ -307,7 +310,7 @@ void F1_2020_Converter::insertLapTable(sqlite3* f1Db,sqlite3* convertedDb){
 	int ret_code;
 	
 	std::string insertSql = "INSERT INTO lap(driver,lap_number,lap_time) VALUES ";
-	std::string selectSql = "SELECT packet FROM packets WHERE packetID = 2 GROUP BY frameIdentifier ORDER BY frameIdentifier";
+	std::string selectSql = "SELECT packet FROM packets WHERE packetID = 2 ORDER BY frameIdentifier";
 	if(sqlite3_prepare_v2(f1Db,selectSql.c_str(),selectSql.size(),&stmt,NULL) != SQLITE_OK){
 		throw SQLErrorException(sqlite3_errmsg(f1Db),selectSql);
 	}
@@ -320,31 +323,47 @@ void F1_2020_Converter::insertLapTable(sqlite3* f1Db,sqlite3* convertedDb){
 	std::array<int,22> aCurrentLapNum;
 	for(int i=0;i<22;i++){
 		aCurrentLapNum[i] = -1;
+		insertLapData[i] = std::vector<lapData>();
 	}
 
 	while((ret_code = sqlite3_step(stmt)) == SQLITE_ROW){
 		PacketLapData* lapData = (PacketLapData*)sqlite3_column_blob(stmt,0);
+
 		for(int i=0;i<22;i++){
 			int currentLap = lapData->m_lapData[i].m_currentLapNum;
-			int* frameIdentifier = (int*)lapData->m_header.m_frameIdentifier;
-
-			if(aCurrentLapNum[i] != currentLap){
+			float currentLapTime = lapData->m_lapData[i].m_currentLapTime;
+			
+			if(currentLap == 0){//Lap 0 is not possible
+				continue;
+			}
+			if(abs(currentLapTime) < FLT_MIN ){
+				continue;
+			}
+			
+			bool bHasLap = false;
+			for(int j = 0; j < insertLapData[i].size();j++){
+				if(insertLapData[i][j].lapNumber == currentLap){
+					bHasLap = true;
+					if(insertLapData[i][j].lapTime < currentLapTime){
+						insertLapData[i][j].lapTime = currentLapTime;
+					}
+					break;
+				}
+			}
+			
+			if(!bHasLap){
 				struct lapData l;
 				l.driver = i;
 				l.lapNumber = currentLap;
-				if(insertLapData[i].size() > 0){
-					auto lastElement = insertLapData[i].rbegin();
-					lastElement->lapTime = lapData->m_lapData[i].m_lastLapTime;
-				}
+				l.lapTime = currentLapTime;
 				insertLapData[i].push_back(l);
-				aCurrentLapNum[i] = currentLap;
-			} else {
-				auto lastElement = insertLapData[i].rbegin();
-				lastElement->lapTime = lapData->m_lapData[i].m_currentLapTime;
 			}
+			
 		}
 	}
+
 	sqlite3_finalize(stmt);
+	std::cout << "finished Collect Data" << std::endl;
 
 	for(int i=0;i<22;i++){
 		for(auto iter=insertLapData[i].begin();iter != insertLapData[i].end();iter++){
