@@ -183,6 +183,7 @@ void DiagramWidget::removeXyDataset(int color){
     calculateOverallMinMax();
     paintNow();
 }
+
 void DiagramWidget::calculateOverallMinMax(){
     mOverallMinX = FLT_MAX;
     mOverallMaxX = FLT_MIN;
@@ -221,4 +222,3 @@ void DiagramWidget::clearXyDataset(){
     
     calculateOverallMinMax();
     paintNow();
-}

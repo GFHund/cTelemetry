@@ -11,8 +11,11 @@ class DiagramView:public wxFrame, public AbstractEvent{
     DiagramView(wxWindow* parent=(wxWindow *)NULL);
 	~DiagramView();
     void event(std::string eventName,EventParam* param = nullptr);
-    void updateDiagramm();
+    void updateProperties();
     void OnProperiesListClicked(wxCommandEvent& event);
+    void OnTrackDistanceSelected(wxCommandEvent& event);
+    void OnTimeSelected(wxCommandEvent& event);
+    void updateDiagramm();
 
 /*
     // event handlers (these functions should _not_ be virtual)

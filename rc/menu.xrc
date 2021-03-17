@@ -16,5 +16,20 @@
 				<help></help>
 			</object>
 		</object>
+		<object class="wxMenu" name="mSettings">
+			<label>Settings</label>
+			<object class="wxMenu" name="mXAxis">
+				<label>x Axis</label>
+				<object class="wxMenuItem" name="mTrackDistance">
+					<label>Track Distance</label>
+					<radio>1</radio>
+				</object>
+				<object class="wxMenuItem" name="mTime">
+					<label>Time</label>
+					<help>Time since crossing the start line</help>
+					<radio>1</radio>
+				</object>
+			</object>
+		</object>
 	</object>
 </resource>

@@ -121,15 +121,21 @@ int DbFile::getLapId(AnalyseData metaData){
 }
 int DbFile::getDriverId(AnalyseData metaData){
     int pos = metaData.getPlayer().find('|');
-    std::string playerName; 
+    std::string playerName;
+    std::string playerNumber = "";
     if(pos == std::string::npos){
         playerName = metaData.getPlayer();
     }else{
         playerName = metaData.getPlayer().substr(pos+1);
+        playerNumber = metaData.getPlayer().substr(0,pos);
     }
     std::string sql = "SELECT id FROM driver WHERE name LIKE \"";
     sql += playerName;
     sql += "\"";
+    if(playerNumber.size() > 0){
+        sql += " AND number = ";
+        sql += playerNumber;
+    }
     sqlite3_stmt* stmt;
 	int ret_code;
     int ret;
@@ -194,6 +200,10 @@ DiagramDataSet DbFile::getValues(AnalyseData metaData, int xProperties, int key)
     if(sqlite3_prepare_v2(this->mDb,sql.c_str(),sql.size(),&stmt,NULL) != SQLITE_OK){
 		throw SQLErrorException(sqlite3_errmsg(this->mDb),sql);
 	}
+    std::ofstream ofs;
+    ofs.open("Data.csv");
+    ofs << sql << std::endl;
+    ofs << metaData.getLap() << " " << metaData.getPlayer() << std::endl;
     while((ret_code = sqlite3_step(stmt)) == SQLITE_ROW){
         float xAxis = sqlite3_column_double(stmt,0);
         float yAxis;
@@ -202,6 +212,7 @@ DiagramDataSet DbFile::getValues(AnalyseData metaData, int xProperties, int key)
         } else if(typeTable.compare("float") == 0){
             yAxis = sqlite3_column_double(stmt,1);
         }
+        ofs << xAxis << ";" << yAxis << std::endl;
         ret.push_back(std::pair<float,float>(xAxis,yAxis));        
     }
     sqlite3_finalize(stmt);

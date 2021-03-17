@@ -9,6 +9,8 @@
 
 BEGIN_EVENT_TABLE(DiagramView, wxFrame)
     EVT_LISTBOX(XRCID("mPropertiesSelector"), DiagramView::OnProperiesListClicked)
+    EVT_MENU(XRCID("mTrackDistance"),DiagramView::OnTrackDistanceSelected)
+    EVT_MENU(XRCID("mTime"),DiagramView::OnTimeSelected)
 END_EVENT_TABLE()
 
 DiagramView::DiagramView(wxWindow* parent){
@@ -48,10 +50,10 @@ DiagramView::~DiagramView(){}
 
 void DiagramView::event(std::string eventName,EventParam* param){
     if(eventName.compare("updateDiagramm") == 0){
-        updateDiagramm();
+        updateProperties();
     }
 }
-void DiagramView::updateDiagramm(){
+void DiagramView::updateProperties(){
     std::map<int,std::string> finalList;
     wxListBox* propertiesListCtrl = XRCCTRL(*this, "mPropertiesSelector", wxListBox);
     for(int i=0;i < FileManager::getInstance()->getNumberOfActiveLaps();i++){
@@ -68,7 +70,31 @@ void DiagramView::updateDiagramm(){
     }
 }
 void DiagramView::OnProperiesListClicked(wxCommandEvent& event){
+    updateDiagramm();
+}
+
+void DiagramView::OnTrackDistanceSelected(wxCommandEvent& event){
+    updateDiagramm();
+}
+void DiagramView::OnTimeSelected(wxCommandEvent& event){
+    updateDiagramm();
+}
+void DiagramView::updateDiagramm(){
     wxListBox* propertiesListCtrl = XRCCTRL(*this, "mPropertiesSelector", wxListBox);
+    wxMenuItem* trackDistanceMenuItem = GetMenuBar()->FindItem(XRCID("mTrackDistance"));//XRCCTRL(*this,"mTrackDistance",wxMenuItem);
+    //wxMenuItem* timeDistanceMenuItem = XRCCTRL(*this,"mTime",wxMenuItem);
+    wxMenuItem* timeDistanceMenuItem = GetMenuBar()->FindItem(XRCID("mTime"));
+    
+    int xProperties = 0;
+    
+    if(trackDistanceMenuItem->IsChecked()){
+        xProperties = 0;
+    } else if(timeDistanceMenuItem->IsChecked()) {
+        xProperties = 1;
+    }
+    DiagramWidget* diagramWidget = XRCCTRL (*this,"mDiagram",DiagramWidget);
+    diagramWidget->clearDatasets();
+
     int selection = propertiesListCtrl->GetSelection();
     wxString selectionString = propertiesListCtrl->GetString(selection);
     DiagramWidget* diagramWidget = XRCCTRL (*this,"mDiagram",DiagramWidget);
@@ -77,7 +103,8 @@ void DiagramView::OnProperiesListClicked(wxCommandEvent& event){
         try{
             AnalyseData& metaData = FileManager::getInstance()->getActiveLap(i);
             DiagramDataSet data = FileManager::getInstance()
-                ->getOpenDbFileByName(metaData.getFilename()).getValues(metaData,0,selectionString.ToStdString());        
+                ->getOpenDbFileByName(metaData.getFilename()).getValues(metaData,xProperties,selectionString.ToStdString());
+
             diagramWidget->addXyDataset(data,metaData.getColor());
         }catch(NotFoundException e){
             std::string message = "Not Found Exception";
@@ -100,6 +127,5 @@ void DiagramView::OnProperiesListClicked(wxCommandEvent& event){
             msg->ShowModal();
             break;
         }
-        
     }
 }

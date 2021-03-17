@@ -44,8 +44,12 @@ class DiagramWidget: public wxWindow{
 	/*my Diagramm Functions*/
 	void addXyDataset(DiagramDataSet dataset, int color);
 	void removeXyDataset(int color);
+<<<<<<< Updated upstream
 	void clearXyDataset();
 
+=======
+	void clearDatasets();
+>>>>>>> Stashed changes
 	
 	DECLARE_EVENT_TABLE();
 };

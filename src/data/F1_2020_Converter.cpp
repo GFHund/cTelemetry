@@ -416,7 +416,7 @@ void F1_2020_Converter::insertReferenceDataTable(sqlite3*f1Db,sqlite3* converted
 	int ret_code;
 
 	std::string insertSql = "INSERT INTO reference_unit(lap_id, lap_distance, lap_time, session_time, frame_identifier,lap_invalid) VALUES ";
-	std::string selectSql = "SELECT packet FROM packets WHERE packetID = 2 GROUP BY frameIdentifier ORDER BY frameIdentifier";
+	std::string selectSql = "SELECT packet FROM packets WHERE packetID = 2 ORDER BY frameIdentifier";//GROUP BY frameIdentifier
 	//select statement
 	if(sqlite3_prepare_v2(f1Db,selectSql.c_str(),selectSql.size(),&stmt,NULL) != SQLITE_OK){
 		throw SQLErrorException(sqlite3_errmsg(f1Db),selectSql);
@@ -663,6 +663,7 @@ void F1_2020_Converter::insertIntDataTable(sqlite3*f1Db,sqlite3* convertedDb){
 				int speed = telemetryData->m_carTelemetryData[i].m_speed;
 				int rpm = telemetryData->m_carTelemetryData[i].m_engineRPM;
 				int gear = telemetryData->m_carTelemetryData[i].m_gear;
+
 				int id = sqlite3_column_int(stmt2,0);
 
 				if(bFirst){
@@ -822,3 +823,6 @@ void F1_2020_Converter::insertVec3DataTable(sqlite3*f1Db,sqlite3* convertedDb){
 	}
 }
 
+void test(){
+	std::string selectSql = "SELECT a.packet FROM packets AS a LEFT JOIN packets as b ON a.frameIdentifier = b.frameIdentifier AND b.packetId = 2 WHERE a.packetId = 6";
+}
