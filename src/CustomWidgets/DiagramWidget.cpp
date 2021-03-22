@@ -1,10 +1,12 @@
 #include "DiagramWidget.h"
 
+
 #include <utility>
 #include <cfloat>
 #include <chrono>
 #include <fstream>
 #include <wx/dcbuffer.h>
+
 
 
 BEGIN_EVENT_TABLE(DiagramWidget, wxPanel)
@@ -109,6 +111,7 @@ void DiagramWidget::render(wxDC&  dc)
             dc.DrawLine(x0,y0,x1,y1);
         }
     }
+    this->mValueX = xValueAtMouse;
     dc.SetPen(wxPen(wxColour(0,0,0,255)));
     if(mShowContextWindow){
         dc.SetBrush(wxColour(255,255,255,0));
@@ -161,6 +164,9 @@ void DiagramWidget::mouseMoved(wxMouseEvent& event) {
         mMouseX = event.GetX();
         mMouseY = event.GetY();
         paintNow();
+        ChangeDiagramEvent event(DIAGRAM_CHANGE, GetId(),this->mValueX);
+        event.SetEventObject(this);
+        ProcessWindowEvent(event);
     }
 }
 void DiagramWidget::mouseWheelMoved(wxMouseEvent& event) {}
@@ -222,3 +228,4 @@ void DiagramWidget::clearXyDataset(){
     
     calculateOverallMinMax();
     paintNow();
+}

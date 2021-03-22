@@ -4,6 +4,7 @@
     #include "wx/wx.h"
 #endif
 #include "EventSystem/AbstractEvent.h"
+#include "CustomEvents/ChangeDiagramEvent.h"
 
 class DiagramView:public wxFrame, public AbstractEvent{
 	public:
@@ -16,6 +17,7 @@ class DiagramView:public wxFrame, public AbstractEvent{
     void OnTrackDistanceSelected(wxCommandEvent& event);
     void OnTimeSelected(wxCommandEvent& event);
     void updateDiagramm();
+    void OnDiagramChange(ChangeDiagramEvent& event);
 
 /*
     // event handlers (these functions should _not_ be virtual)

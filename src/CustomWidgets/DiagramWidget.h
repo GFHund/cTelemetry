@@ -2,6 +2,7 @@
 #include <wx/sizer.h>
 
 #include "../data/DiagramDataSet.h"
+#include "../CustomEvents/ChangeDiagramEvent.h"
 class DiagramWidget: public wxWindow{
 	private:
 	const int PADDING_X = 20;
@@ -12,6 +13,7 @@ class DiagramWidget: public wxWindow{
 	bool mShowContextWindow;
 	int mMouseX;
 	int mMouseY;
+	float mValueX;
 
 	float mOverallMinX;
 	float mOverallMaxX;
@@ -44,13 +46,14 @@ class DiagramWidget: public wxWindow{
 	/*my Diagramm Functions*/
 	void addXyDataset(DiagramDataSet dataset, int color);
 	void removeXyDataset(int color);
-<<<<<<< Updated upstream
-	void clearXyDataset();
 
-=======
-	void clearDatasets();
->>>>>>> Stashed changes
+	void clearXyDataset();
 	
 	DECLARE_EVENT_TABLE();
 };
 
+wxDEFINE_EVENT(DIAGRAM_CHANGE,ChangeDiagramEvent);
+
+#define ChangeDiagramEventHandler(func) (&func)
+
+#define CHANGE_DIAGRAM_EVENT(id, func) wx__DECLARE_EVT1(DIAGRAM_CHANGE, id, ChangeDiagramEventHandler(func))

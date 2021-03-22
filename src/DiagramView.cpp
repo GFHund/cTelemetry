@@ -1,6 +1,7 @@
 #include "DiagramView.h"
 
 #include "CustomWidgets/DiagramWidget.h"
+
 #include "wx/xrc/xmlres.h"
 #include "data/FileManager.h"
 #include "EventSystem/EventManager.h"
@@ -11,6 +12,7 @@ BEGIN_EVENT_TABLE(DiagramView, wxFrame)
     EVT_LISTBOX(XRCID("mPropertiesSelector"), DiagramView::OnProperiesListClicked)
     EVT_MENU(XRCID("mTrackDistance"),DiagramView::OnTrackDistanceSelected)
     EVT_MENU(XRCID("mTime"),DiagramView::OnTimeSelected)
+    CHANGE_DIAGRAM_EVENT(XRCID("mDiagram"),DiagramView::OnDiagramChange)
 END_EVENT_TABLE()
 
 DiagramView::DiagramView(wxWindow* parent){
@@ -93,12 +95,10 @@ void DiagramView::updateDiagramm(){
         xProperties = 1;
     }
     DiagramWidget* diagramWidget = XRCCTRL (*this,"mDiagram",DiagramWidget);
-    diagramWidget->clearDatasets();
+    diagramWidget->clearXyDataset();
 
     int selection = propertiesListCtrl->GetSelection();
     wxString selectionString = propertiesListCtrl->GetString(selection);
-    DiagramWidget* diagramWidget = XRCCTRL (*this,"mDiagram",DiagramWidget);
-    diagramWidget->clearXyDataset();
     for(int i=0;i < FileManager::getInstance()->getNumberOfActiveLaps();i++){
         try{
             AnalyseData& metaData = FileManager::getInstance()->getActiveLap(i);
@@ -128,4 +128,13 @@ void DiagramView::updateDiagramm(){
             break;
         }
     }
+}
+
+void DiagramView::OnDiagramChange(ChangeDiagramEvent& event){
+    float axisX = event.getAxisX();
+    EventParam* param = new EventParam();
+    param->setFloat("xAxis",axisX);
+    EventManager::getInstance()->fireEvent("DiagramChanged",param);
+    
+    //EventManager::getInstance()->subscribe("updateDiagramm",this);
 }
