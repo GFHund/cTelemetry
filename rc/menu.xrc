@@ -15,6 +15,10 @@
 				<label>enable diagramm hover box</label>
 				<help></help>
 			</object>
+			<object class="wxMenuItem" name="mTrackView">
+				<label>show Track View</label>
+				<help></help>
+			</object>
 		</object>
 		<object class="wxMenu" name="mSettings">
 			<label>Settings</label>

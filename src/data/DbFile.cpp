@@ -193,6 +193,14 @@ DiagramDataSet DbFile::getValues(AnalyseData metaData, int xProperties, int key)
     sql += std::to_string(key);
     sql += " AND lap_id = ";
     sql += std::to_string(lapId);
+    switch(xProperties){
+        case 0:
+            sql += " AND lap_distance > 0 ORDER BY lap_distance";
+            break;
+        case 1:
+            sql += " AND lap_time > 0 ORDER BY lap_time";
+            break;
+    }
 
     sqlite3_stmt* stmt;
 	int ret_code;
@@ -200,10 +208,6 @@ DiagramDataSet DbFile::getValues(AnalyseData metaData, int xProperties, int key)
     if(sqlite3_prepare_v2(this->mDb,sql.c_str(),sql.size(),&stmt,NULL) != SQLITE_OK){
 		throw SQLErrorException(sqlite3_errmsg(this->mDb),sql);
 	}
-    std::ofstream ofs;
-    ofs.open("Data.csv");
-    ofs << sql << std::endl;
-    ofs << metaData.getLap() << " " << metaData.getPlayer() << std::endl;
     while((ret_code = sqlite3_step(stmt)) == SQLITE_ROW){
         float xAxis = sqlite3_column_double(stmt,0);
         float yAxis;
@@ -212,10 +216,56 @@ DiagramDataSet DbFile::getValues(AnalyseData metaData, int xProperties, int key)
         } else if(typeTable.compare("float") == 0){
             yAxis = sqlite3_column_double(stmt,1);
         }
-        ofs << xAxis << ";" << yAxis << std::endl;
         ret.push_back(std::pair<float,float>(xAxis,yAxis));        
     }
     sqlite3_finalize(stmt);
     DiagramDataSet dataset = DiagramDataSet(metaData.getPlayer(),ret);
+    return dataset;
+}
+
+TrackDataSet DbFile::getTrackValues(AnalyseData metaData, std::string propertiesName){
+    try{
+        int key = getKeyFromPropertiesName(propertiesName);
+        return getTrackValues(metaData,key);
+    } catch(SQLErrorException e){
+        throw e;
+    } catch(std::exception e){
+        throw FileOpenErrorException("push_back has thrown an error");
+    }
+}
+TrackDataSet DbFile::getTrackValues(AnalyseData metaData, int key){
+    int lapId = getLapId(metaData);
+    std::string typeTable = getKeyType(key);
+    std::string sql = "SELECT data_table.";
+    sql += typeTable;
+    sql += "_val,vec_table.x_val,vec_table.z_val";
+    sql += " FROM reference_unit INNER JOIN ";
+    sql += typeTable;
+    sql += "_data as data_table ON data_table.reference_unit_id = reference_unit.id ";
+    sql += "INNER JOIN vec_data as vec_table ON vec_table.reference_unit_id = reference_unit.id ";
+    sql += "WHERE data_table.property_id = ";
+    sql += std::to_string(key);
+    sql += " AND reference_unit.lap_id = ";
+    sql += std::to_string(lapId);
+
+    sqlite3_stmt* stmt;
+	int ret_code;
+    std::vector< std::pair<dogEngine::CVector2,float> > ret;
+    if(sqlite3_prepare_v2(this->mDb,sql.c_str(),sql.size(),&stmt,NULL) != SQLITE_OK){
+		throw SQLErrorException(sqlite3_errmsg(this->mDb),sql);
+	}
+    std::ofstream ofs;
+    
+
+    while((ret_code = sqlite3_step(stmt)) == SQLITE_ROW){
+        float value = sqlite3_column_double(stmt,0);
+        float xAxis = sqlite3_column_double(stmt,1);
+        float yAxis = sqlite3_column_double(stmt,2);
+        
+        ret.push_back(std::pair<dogEngine::CVector2,float>(dogEngine::CVector2(xAxis,yAxis),value));        
+    }
+    
+    sqlite3_finalize(stmt);
+    TrackDataSet dataset = TrackDataSet(metaData.getPlayer(),ret);
     return dataset;
 }

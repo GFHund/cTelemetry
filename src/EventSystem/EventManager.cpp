@@ -29,6 +29,15 @@ void EventManager::subscribe(std::string name,AbstractEvent* event){
         mEvents.insert(std::pair<std::string,std::vector<AbstractEvent*>>(name,vec));
     }
 }
+void EventManager::unsubscribe(std::string name,AbstractEvent* event){
+    std::vector<AbstractEvent*>& vec = mEvents.at(name);
+    for(auto i = vec.begin();i!= vec.end();i++){
+        if((*i) == event){
+            vec.erase(i);
+            return;
+        }
+    }
+}
 void EventManager::fireEvent(std::string name,EventParam* param){
     try{
         std::vector<AbstractEvent*> vec = mEvents.at(name);

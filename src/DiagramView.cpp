@@ -7,11 +7,13 @@
 #include "EventSystem/EventManager.h"
 #include "data/Exceptions/NotFoundException.h"
 #include "data/Exceptions/SQLErrorException.h"
+#include "TrackView.h"
 
 BEGIN_EVENT_TABLE(DiagramView, wxFrame)
     EVT_LISTBOX(XRCID("mPropertiesSelector"), DiagramView::OnProperiesListClicked)
     EVT_MENU(XRCID("mTrackDistance"),DiagramView::OnTrackDistanceSelected)
     EVT_MENU(XRCID("mTime"),DiagramView::OnTimeSelected)
+    EVT_MENU(XRCID("mTrackView"),DiagramView::OnTrackView)
     CHANGE_DIAGRAM_EVENT(XRCID("mDiagram"),DiagramView::OnDiagramChange)
 END_EVENT_TABLE()
 
@@ -46,6 +48,7 @@ DiagramView::DiagramView(wxWindow* parent){
     //CreateStatusBar( 1 );
 
     EventManager::getInstance()->subscribe("updateDiagramm",this);
+    mPropertyName = "";
 }
 
 DiagramView::~DiagramView(){}
@@ -73,6 +76,13 @@ void DiagramView::updateProperties(){
 }
 void DiagramView::OnProperiesListClicked(wxCommandEvent& event){
     updateDiagramm();
+
+    wxListBox* propertiesListCtrl = XRCCTRL(*this, "mPropertiesSelector", wxListBox);
+    int selection = propertiesListCtrl->GetSelection();
+    wxString selectionString = propertiesListCtrl->GetString(selection);
+    EventParam* param = new EventParam();
+    param->setString("propertyName",selectionString.ToStdString());
+    EventManager::getInstance()->fireEvent("ChangeProperty",param);
 }
 
 void DiagramView::OnTrackDistanceSelected(wxCommandEvent& event){
@@ -99,6 +109,7 @@ void DiagramView::updateDiagramm(){
 
     int selection = propertiesListCtrl->GetSelection();
     wxString selectionString = propertiesListCtrl->GetString(selection);
+    mPropertyName = selectionString.ToStdString();
     for(int i=0;i < FileManager::getInstance()->getNumberOfActiveLaps();i++){
         try{
             AnalyseData& metaData = FileManager::getInstance()->getActiveLap(i);
@@ -134,7 +145,12 @@ void DiagramView::OnDiagramChange(ChangeDiagramEvent& event){
     float axisX = event.getAxisX();
     EventParam* param = new EventParam();
     param->setFloat("xAxis",axisX);
+
     EventManager::getInstance()->fireEvent("DiagramChanged",param);
     
     //EventManager::getInstance()->subscribe("updateDiagramm",this);
+}
+void DiagramView::OnTrackView(wxCommandEvent& event){
+    TrackView* trackView = new TrackView(this,mPropertyName);
+    trackView->Show();
 }

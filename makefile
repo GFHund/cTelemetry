@@ -1,6 +1,8 @@
 objects = App.o	\
 DiagramView.o \
 DiagramWidget.o \
+TrackView.o \
+TrackViewWidget.o \
 ChangeDiagramEvent.o \
 DataView.o \
 FileManager.o \
@@ -10,6 +12,8 @@ DbFile.o \
 EventManager.o \
 EventParam.o \
 DiagramDataSet.o \
+TrackDataSet.o \
+vector.o \
 FileNotFoundException.o FileOpenErrorException.o SQLErrorException.o \
 NotFoundException.o sqlite3.o 
 objects_converter = main.o ConverterInterface.o F1_2020_Converter.o SampleGenerator.o FileNotFoundException.o SQLErrorException.o sqlite3.o 
@@ -30,6 +34,8 @@ App.o: src/App.cpp
 main.o: src/main.cpp
 DiagramView.o: src/DiagramView.cpp
 DiagrammWidget.o: src/CustomWidgets/DiagramWidget.cpp
+TrackView.o: src/TrackView.cpp
+TrackViewWidget.o: src/CustomWidgets/TrackViewWidget.cpp
 ChangeDiagramEvent.o: src/CustomEvents/ChangeDiagramEvent.cpp
 DataView.o: src/DataView.cpp
 FileManager.o: src/data/FileManager.cpp
@@ -40,6 +46,8 @@ DbFile.o: src/data/DbFile.cpp
 EventManager.o: src/EventSystem/EventManager.cpp
 EventParam.o: src/EventSystem/EventParam.cpp
 DiagramDataSet.o: src/data/DiagramDataSet.cpp
+TrackDataSet.o: src/data/TrackDataSet.cpp
+vector.o: src/data/vector.cpp
 FileNotFoundException.o: src/data/Exceptions/FileNotFoundException.cpp
 FileOpenErrorException.o: src/data/Exceptions/FileOpenErrorException.cpp
 SQLErrorException.o: src/data/Exceptions/SQLErrorException.cpp

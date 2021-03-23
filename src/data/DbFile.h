@@ -8,6 +8,7 @@
 #include <map>
 #include <thread>
 #include "DiagramDataSet.h"
+#include "TrackDataSet.h"
 
 class DbFile{
 	private:
@@ -29,6 +30,8 @@ class DbFile{
         std::string getPropertiesNameFromKey(int key);
         DiagramDataSet getValues(AnalyseData metaData, int xProperties, std::string propertiesName);
         DiagramDataSet getValues(AnalyseData metaData, int xProperties, int key);
+        TrackDataSet getTrackValues(AnalyseData metaData, std::string propertiesName);
+        TrackDataSet getTrackValues(AnalyseData metaData, int key);
 };
 
 #endif
