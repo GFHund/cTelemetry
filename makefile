@@ -18,11 +18,12 @@ FileNotFoundException.o FileOpenErrorException.o SQLErrorException.o \
 NotFoundException.o sqlite3.o 
 objects_converter = main.o ConverterInterface.o F1_2020_Converter.o SampleGenerator.o FileNotFoundException.o SQLErrorException.o sqlite3.o 
 objects_splitter = SplitOneRound.o sqlite3.o  
+objects_show_laps = ShowLaps.o sqlite3.o  
 CPPFLAGS += `wx-config --cxxflags` 
 #-g
 #-std=c++11
 
-all: cTelemetry.exe cTelemetryConverter.exe SplitOneRound.exe
+all: cTelemetry.exe cTelemetryConverter.exe SplitOneRound.exe ShowLaps.exe
 	 
 cTelemetry.exe: $(objects)
 	$(CXX) -o cTelemetry $(objects) `wx-config --libs core base aui xrc`
@@ -30,6 +31,8 @@ cTelemetryConverter.exe: $(objects_converter)
 	$(CXX) -o cTelemetryConverter $(objects_converter)
 SplitOneRound.exe: $(objects_splitter)
 	$(CXX) -o SplitOneRound $(objects_splitter)
+ShowLaps.exe: $(objects_show_laps)
+	$(CXX) -o ShowLaps $(objects_show_laps)
 App.o: src/App.cpp
 main.o: src/main.cpp
 DiagramView.o: src/DiagramView.cpp
@@ -54,6 +57,7 @@ SQLErrorException.o: src/data/Exceptions/SQLErrorException.cpp
 NotFoundException.o: src/data/Exceptions/NotFoundException.cpp
 
 SplitOneRound.o: src/utilityPrograms/SplitOneRound.cpp
+ShowLaps.o: src/utilityPrograms/ShowLaps.cpp
 
 sqlite3.o: src/vendor/sqlite3/sqlite3.c
 	gcc $(CPPFLAGS) $(CFLAGS) -c $<

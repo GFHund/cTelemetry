@@ -73,6 +73,7 @@ void DataView::OnFileOpenButton(wxCommandEvent& event){
 	}
 
 	wxListBox* pFileOpenList = XRCCTRL(*this, "mOpenFiles", wxListBox);
+	pFileOpenList->Clear();
 	pFileOpenList->InsertItems(wxFileNames.size(),wxFileNames.data(),0);
 }
 void DataView::OnFileCloseButton(wxCommandEvent& event){
