@@ -1,6 +1,7 @@
 #include "TrackViewWidget.h"
 
 #include <wx/dcbuffer.h>
+#include "../data/vector.h"
 
 BEGIN_EVENT_TABLE(TrackViewWidget, wxPanel)
     EVT_PAINT(TrackViewWidget::paintEvent)
@@ -11,6 +12,12 @@ TrackViewWidget::TrackViewWidget(wxFrame* parent,const wxSize& size)
 {
     mTrackMinWidth = size.GetWidth()- 10;
     mTrackMinHeight = size.GetHeight() - 10;
+    
+    mColors.push_back(std::make_pair<int,int>(0x0000000A,0x000000ff));
+    mColors.push_back(std::make_pair<int,int>(0x00000A00,0x0000ff00));
+    mColors.push_back(std::make_pair<int,int>(0x000A0000,0x00ff0000));
+    mColors.push_back(std::make_pair<int,int>(0x000A0A00,0x00ffff00));
+    
 }
 
 void TrackViewWidget::paintEvent(wxPaintEvent& evt){
@@ -41,20 +48,34 @@ void TrackViewWidget::render(wxDC& dc){
     if(mOverallMinY < 0){
         translateY = (mOverallMinY * trackScaling) * -1 + 10;
     }
+    int dataSetNumber = 0;
     for(auto i = mDataSets.begin();i != mDataSets.end();i++){
         TrackDataSet dataSet = *i;
+        int iMinColor = mColors[dataSetNumber].first;
+        int iMaxColor = mColors[dataSetNumber].second;
+        unsigned char* cMinColor = (unsigned char*)&iMinColor;
+        unsigned char* cMaxColor = (unsigned char*)&iMaxColor;
+        dogEngine::CVector3 maxColor = dogEngine::CVector3(cMaxColor[0],cMaxColor[1],cMaxColor[2]);
+        dogEngine::CVector3 minColor = dogEngine::CVector3(cMinColor[0],cMinColor[1],cMinColor[2]);
+        float valueMax = dataSet.getMaxValue();
+        float valueMin = dataSet.getMinValue();
         for(auto j = dataSet.getIterator();!j.isEnd();j.next()){
             if(!j.hasNext()){
                 break;
             }
+            float value = j.getValue();
+            float valuePercent = (value - valueMin) / (valueMax - valueMin);
+            dogEngine::CVector3 valueColor = (minColor - maxColor) * valuePercent + maxColor;
+
             float x0 = j.getVector().getX() * trackScaling + translateX;
             float y0 = j.getVector().getY() * trackScaling + translateY;
             float x1 = j.getNextVector().getX() * trackScaling + translateX;
             float y1 = j.getNextVector().getY() * trackScaling + translateY;
 
+            dc.SetPen(wxPen(wxColour(valueColor.getX(),valueColor.getY(),valueColor.getZ())));
             dc.DrawLine(x0,y0,x1,y1);
         }
-        
+        dataSetNumber++;
     }
     
 }

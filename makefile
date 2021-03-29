@@ -19,7 +19,7 @@ NotFoundException.o sqlite3.o
 objects_converter = main.o ConverterInterface.o F1_2020_Converter.o SampleGenerator.o FileNotFoundException.o SQLErrorException.o sqlite3.o 
 objects_splitter = SplitOneRound.o sqlite3.o  
 objects_show_laps = ShowLaps.o sqlite3.o  
-CPPFLAGS += `wx-config --cxxflags` 
+CPPFLAGS += `wx-config --cxxflags`
 #-g
 #-std=c++11
 

@@ -9,14 +9,17 @@
 
 class TrackViewWidget: public wxWindow{
     private:
+    /*
     struct colorLegend{
 		int from;
 		int to;
 		int color;
 	};
+    */
 
 	std::vector<TrackDataSet> mDataSets;
-	std::vector<colorLegend> mColors;
+	//std::vector<colorLegend> mColors;
+    std::vector< std::pair<int,int> > mColors;
     float mOverallMinX;
 	float mOverallMaxX;
 	float mOverallMinY;

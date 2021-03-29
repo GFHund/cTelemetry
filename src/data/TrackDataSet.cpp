@@ -8,6 +8,8 @@ TrackDataSet::TrackDataSet(std::string name, std::vector< std::pair<dogEngine::C
     mMinXValue = FLT_MAX;
     mMaxYValue = FLT_MIN;
     mMinYValue = FLT_MAX;
+    mMinValue = FLT_MAX;
+    mMaxValue = FLT_MIN;
     for(auto i = mData.begin();i!= mData.end();i++){
         if(i->first.getX() > mMaxXValue){
             mMaxXValue = i->first.getX();
@@ -20,6 +22,12 @@ TrackDataSet::TrackDataSet(std::string name, std::vector< std::pair<dogEngine::C
         }
         if(i->first.getY() < mMinYValue){
             mMinYValue = i->first.getY();
+        }
+        if(i->second < mMinValue){
+            mMinValue = i->second;
+        }
+        if(i->second > mMaxValue){
+            mMaxValue = i->second;
         }
     }
 }
@@ -42,6 +50,13 @@ float TrackDataSet::getMinYValue(){
 }
 std::string TrackDataSet::getName(){
     return this->mName;
+}
+
+float TrackDataSet::getMaxValue(){
+    return this->mMaxValue;
+}
+float TrackDataSet::getMinValue(){
+    return this->mMinValue;
 }
 
 TrackDataSet::Iterator::Iterator(std::vector< std::pair<dogEngine::CVector2,float> >::iterator start, std::vector< std::pair<dogEngine::CVector2,float> >::iterator end){

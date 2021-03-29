@@ -12,6 +12,8 @@ class TrackDataSet{
     float mMinXValue;
     float mMaxYValue;
     float mMinYValue;
+    float mMaxValue;
+    float mMinValue;
     std::string mName;
 
     class Iterator{
@@ -39,6 +41,8 @@ class TrackDataSet{
     float getMinXValue();
     float getMaxYValue();
     float getMinYValue();
+    float getMaxValue();
+    float getMinValue();
     std::string getName();
 };
 
