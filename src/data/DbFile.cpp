@@ -3,6 +3,7 @@
 #include "Exceptions/SQLErrorException.h"
 #include <utility>
 #include "../data/Exceptions/FileOpenErrorException.h"
+#include "../data/Exceptions/NotFoundException.h"
 #include <fstream>
 #include <thread>
 
@@ -254,8 +255,6 @@ TrackDataSet DbFile::getTrackValues(AnalyseData metaData, int key){
     if(sqlite3_prepare_v2(this->mDb,sql.c_str(),sql.size(),&stmt,NULL) != SQLITE_OK){
 		throw SQLErrorException(sqlite3_errmsg(this->mDb),sql);
 	}
-    std::ofstream ofs;
-    
 
     while((ret_code = sqlite3_step(stmt)) == SQLITE_ROW){
         float value = sqlite3_column_double(stmt,0);
@@ -268,4 +267,23 @@ TrackDataSet DbFile::getTrackValues(AnalyseData metaData, int key){
     sqlite3_finalize(stmt);
     TrackDataSet dataset = TrackDataSet(metaData.getPlayer(),ret);
     return dataset;
+}
+
+dogEngine::CVector3 DbFile::get3DPosFromDistance(float distance){
+    std::string sql = "SELECT  MIN(ABS(1-lap_distance)),vec_data.x_val,vec_data.y_val,vec_data.z_val FROM reference_unit LEFT JOIN vec_data ON reference_unit.id = vec_data.reference_unit_id";
+    sqlite3_stmt* stmt;
+	int ret_code;
+    std::vector< std::pair<dogEngine::CVector2,float> > ret;
+    if(sqlite3_prepare_v2(this->mDb,sql.c_str(),sql.size(),&stmt,NULL) != SQLITE_OK){
+		throw SQLErrorException(sqlite3_errmsg(this->mDb),sql);
+	}
+    ret_code = sqlite3_step(stmt);
+    if(ret_code != SQLITE_ROW){
+        throw NotFoundException();
+    }
+    float xVal = sqlite3_column_double(stmt,1);
+    float yVal = sqlite3_column_double(stmt,2);
+    float zVal = sqlite3_column_double(stmt,3);
+    sqlite3_finalize(stmt);
+    return dogEngine::CVector3(xVal,yVal,zVal);
 }

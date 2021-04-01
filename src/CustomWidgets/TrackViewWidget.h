@@ -26,6 +26,7 @@ class TrackViewWidget: public wxWindow{
 	float mOverallMaxY;
     int mTrackMinWidth;
     int mTrackMinHeight;
+    dogEngine::CVector2 mPoint;
 
     void calculateOverallMinMax();
     DECLARE_EVENT_TABLE();
@@ -39,7 +40,7 @@ class TrackViewWidget: public wxWindow{
     void addTrackDataset(TrackDataSet dataset);
     void clearDataSet();
 
-    
+    void setPoint(dogEngine::CVector2 vec);
 };
 
 #endif

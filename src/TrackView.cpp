@@ -6,6 +6,7 @@
 #include "data/Exceptions/NotFoundException.h"
 #include "data/Exceptions/SQLErrorException.h"
 #include "data/Exceptions/FileOpenErrorException.h"
+#include <fstream>
 
 BEGIN_EVENT_TABLE(TrackView, wxFrame)
     //EVT_LISTBOX(XRCID("mPropertiesSelector"), TrackView::OnProperiesListClicked)
@@ -33,34 +34,35 @@ TrackView::~TrackView(){
     EventManager::getInstance()->unsubscribe("ChangeProperty",this);
 }
 void TrackView::event(std::string eventName,EventParam* param){
+    
     if(eventName.compare("ChangeProperty") == 0){
         std::string propertyName = param->getString("propertyName");
         mPropertyName = propertyName;
         addDataToTrackView();
     }
     else if(eventName.compare("DiagramChanged") == 0){
-        float distance = param->getFloat("xAxis");
-        setPointInTrackView(distance);
+        float vecX = param->getFloat("xPos");
+        float vecY = param->getFloat("yPos");
+        float vecZ = param->getFloat("zPos");
+        dogEngine::CVector3 vec(vecX,vecY,vecZ);
+        setPointInTrackView(vec);
     }
 }
 void TrackView::updateListBoxes(){
 
 }
-void TrackView::setPointInTrackView(float distance){
-    
+void TrackView::setPointInTrackView(dogEngine::CVector3 pos){
+    TrackViewWidget* trackViewWidget = XRCCTRL(*this, "mTrack", TrackViewWidget);
+    trackViewWidget->setPoint(dogEngine::CVector2(pos.getX(),pos.getZ()));
 }
 void TrackView::addDataToTrackView(){
-    //wxListBox* propertiesListCtrl = XRCCTRL(*this, "mPropertiesSelector", wxListBox);
-    //wxListBox* driverListCtrl = XRCCTRL(*this, "mPropertiesSelector", wxListBox);
+    
     if(mPropertyName.length() == 0){
         return;
     }
     TrackViewWidget* trackViewWidget = XRCCTRL(*this, "mTrack", TrackViewWidget);
-
-    //int propertiesSelection = propertiesListCtrl->GetSelection();
-    //int driverSelection = driverListCtrl->GetSelection();
     trackViewWidget->clearDataSet();
-    //FileManager::getInstance()
+    
     for(int i=0;i < FileManager::getInstance()->getNumberOfActiveLaps();i++){
         try{
             AnalyseData& metaData = FileManager::getInstance()->getActiveLap(i);

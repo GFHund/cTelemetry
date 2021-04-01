@@ -77,6 +77,11 @@ void TrackViewWidget::render(wxDC& dc){
         }
         dataSetNumber++;
     }
+    dogEngine::CVector2 point = this->mPoint * trackScaling;
+    point = point + dogEngine::CVector2(translateX,translateY);
+    dc.SetPen(wxPen(wxColour(0,0,0)));
+    dc.DrawLine(point.getX()-5,point.getY()-5,point.getX()+5,point.getY()+5);
+    dc.DrawLine(point.getX()-5,point.getY()+5,point.getX()+5,point.getY()-5);
     
 }
 void TrackViewWidget::addTrackDataset(TrackDataSet dataset){
@@ -112,7 +117,9 @@ void TrackViewWidget::calculateOverallMinMax(){
             mOverallMinY = minY;
         }
     }
-    //mOverallMinY -= 10;
-    //mOverallMinX -= 10;
+}
 
+void TrackViewWidget::setPoint(dogEngine::CVector2 vec){
+    this->mPoint = vec;
+    this->paintNow();
 }

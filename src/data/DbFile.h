@@ -9,6 +9,7 @@
 #include <thread>
 #include "DiagramDataSet.h"
 #include "TrackDataSet.h"
+#include "vector.h"
 
 class DbFile{
 	private:
@@ -32,6 +33,8 @@ class DbFile{
         DiagramDataSet getValues(AnalyseData metaData, int xProperties, int key);
         TrackDataSet getTrackValues(AnalyseData metaData, std::string propertiesName);
         TrackDataSet getTrackValues(AnalyseData metaData, int key);
+        dogEngine::CVector3 get3DPosFromDistance(float distance);
+        
 };
 
 #endif

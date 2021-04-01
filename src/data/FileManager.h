@@ -28,6 +28,7 @@ class FileManager{
 	std::vector<std::string> getOpenFiles();
 	bool closeFile(std::string name);
 	DbFile& getOpenDbFileByName(std::string name);
+	DbFile& getFirstDbFile();
 
 	bool addActiveLap(AnalyseData lapMetaData);
 	bool removeActiveLap(AnalyseData lapMetaData);

@@ -8,6 +8,7 @@
 #include "data/Exceptions/NotFoundException.h"
 #include "data/Exceptions/SQLErrorException.h"
 #include "TrackView.h"
+#include <fstream>
 
 BEGIN_EVENT_TABLE(DiagramView, wxFrame)
     EVT_LISTBOX(XRCID("mPropertiesSelector"), DiagramView::OnProperiesListClicked)
@@ -93,8 +94,7 @@ void DiagramView::OnTimeSelected(wxCommandEvent& event){
 }
 void DiagramView::updateDiagramm(){
     wxListBox* propertiesListCtrl = XRCCTRL(*this, "mPropertiesSelector", wxListBox);
-    wxMenuItem* trackDistanceMenuItem = GetMenuBar()->FindItem(XRCID("mTrackDistance"));//XRCCTRL(*this,"mTrackDistance",wxMenuItem);
-    //wxMenuItem* timeDistanceMenuItem = XRCCTRL(*this,"mTime",wxMenuItem);
+    wxMenuItem* trackDistanceMenuItem = GetMenuBar()->FindItem(XRCID("mTrackDistance"));
     wxMenuItem* timeDistanceMenuItem = GetMenuBar()->FindItem(XRCID("mTime"));
     
     int xProperties = 0;
@@ -142,9 +142,29 @@ void DiagramView::updateDiagramm(){
 }
 
 void DiagramView::OnDiagramChange(ChangeDiagramEvent& event){
-    float axisX = event.getAxisX();
+    std::ofstream ofs;
+    ofs.open("philipp.txt");
+    ofs << "OnDiagramChange" << std::endl;
+    
+    wxMenuItem* timeDistanceMenuItem = GetMenuBar()->FindItem(XRCID("mTime"));
+    if(timeDistanceMenuItem->IsChecked()) {
+        
+        ofs.open("philipp.txt");
+        ofs << "Time distance" << std::endl;
+        ofs.close();
+        return;
+    }
+    ofs.close();
+
+    float distance = event.getAxisX();
+
+    dogEngine::CVector3 pos = FileManager::getInstance()->getFirstDbFile().get3DPosFromDistance(distance);
+
     EventParam* param = new EventParam();
-    param->setFloat("xAxis",axisX);
+    param->setFloat("xPos",pos.getX());
+    param->setFloat("yPos",pos.getY());
+    param->setFloat("zPos",pos.getZ());
+    
 
     EventManager::getInstance()->fireEvent("DiagramChanged",param);
     

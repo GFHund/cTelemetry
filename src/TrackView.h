@@ -6,6 +6,7 @@
 #endif
 #include <string>
 #include "EventSystem/AbstractEvent.h"
+#include "data/vector.h"
 
 class TrackView: public wxFrame, public AbstractEvent{
     
@@ -18,7 +19,7 @@ class TrackView: public wxFrame, public AbstractEvent{
 	~TrackView();
     void event(std::string eventName,EventParam* param = nullptr);
     void updateListBoxes();
-    void setPointInTrackView(float distance);
+    void setPointInTrackView(dogEngine::CVector3 pos);
     void addDataToTrackView();
 
     void OnProperiesListClicked(wxCommandEvent& event);

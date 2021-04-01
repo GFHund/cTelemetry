@@ -139,3 +139,6 @@ unsigned int FileManager::getColor(int index){
     }
     return color[index];
 }
+DbFile& FileManager::getFirstDbFile(){
+    return mFiles[0];
+}
