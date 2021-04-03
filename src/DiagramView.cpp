@@ -142,33 +142,30 @@ void DiagramView::updateDiagramm(){
 }
 
 void DiagramView::OnDiagramChange(ChangeDiagramEvent& event){
-    std::ofstream ofs;
-    ofs.open("philipp.txt");
-    ofs << "OnDiagramChange" << std::endl;
-    
     wxMenuItem* timeDistanceMenuItem = GetMenuBar()->FindItem(XRCID("mTime"));
+    
     if(timeDistanceMenuItem->IsChecked()) {
-        
-        ofs.open("philipp.txt");
-        ofs << "Time distance" << std::endl;
-        ofs.close();
         return;
     }
-    ofs.close();
 
     float distance = event.getAxisX();
 
-    dogEngine::CVector3 pos = FileManager::getInstance()->getFirstDbFile().get3DPosFromDistance(distance);
+    try{
+        dogEngine::CVector3 pos = FileManager::getInstance()->getFirstDbFile().get3DPosFromDistance(distance);
 
-    EventParam* param = new EventParam();
-    param->setFloat("xPos",pos.getX());
-    param->setFloat("yPos",pos.getY());
-    param->setFloat("zPos",pos.getZ());
-    
+        EventParam* param = new EventParam();
+        param->setFloat("xPos",pos.getX());
+        param->setFloat("yPos",pos.getY());
+        param->setFloat("zPos",pos.getZ());
+        
 
-    EventManager::getInstance()->fireEvent("DiagramChanged",param);
+        EventManager::getInstance()->fireEvent("DiagramChanged",param);
+        
+        //EventManager::getInstance()->subscribe("updateDiagramm",this);
+    }catch(NotFoundException e){
+        
+    }
     
-    //EventManager::getInstance()->subscribe("updateDiagramm",this);
 }
 void DiagramView::OnTrackView(wxCommandEvent& event){
     TrackView* trackView = new TrackView(this,mPropertyName);

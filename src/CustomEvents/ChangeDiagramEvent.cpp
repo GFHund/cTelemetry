@@ -1,7 +1,7 @@
 #include "ChangeDiagramEvent.h"
 
 ChangeDiagramEvent::ChangeDiagramEvent(wxEventType eventType, int winid, float xAxis)
-:wxEvent(winid,eventType){
+:wxCommandEvent(eventType,winid){
     this->mXAxis = xAxis;
 }
 

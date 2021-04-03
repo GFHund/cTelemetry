@@ -140,5 +140,8 @@ unsigned int FileManager::getColor(int index){
     return color[index];
 }
 DbFile& FileManager::getFirstDbFile(){
+    if(mFiles.size() < 1){
+        throw NotFoundException();
+    }
     return mFiles[0];
 }

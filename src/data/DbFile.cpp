@@ -270,13 +270,14 @@ TrackDataSet DbFile::getTrackValues(AnalyseData metaData, int key){
 }
 
 dogEngine::CVector3 DbFile::get3DPosFromDistance(float distance){
-    std::string sql = "SELECT  MIN(ABS(1-lap_distance)),vec_data.x_val,vec_data.y_val,vec_data.z_val FROM reference_unit LEFT JOIN vec_data ON reference_unit.id = vec_data.reference_unit_id";
+    std::string sql = "SELECT  MIN(ABS(:distance-lap_distance)),vec_data.x_val,vec_data.y_val,vec_data.z_val FROM reference_unit LEFT JOIN vec_data ON reference_unit.id = vec_data.reference_unit_id";
     sqlite3_stmt* stmt;
 	int ret_code;
     std::vector< std::pair<dogEngine::CVector2,float> > ret;
     if(sqlite3_prepare_v2(this->mDb,sql.c_str(),sql.size(),&stmt,NULL) != SQLITE_OK){
 		throw SQLErrorException(sqlite3_errmsg(this->mDb),sql);
 	}
+    sqlite3_bind_double(stmt,1,distance);
     ret_code = sqlite3_step(stmt);
     if(ret_code != SQLITE_ROW){
         throw NotFoundException();

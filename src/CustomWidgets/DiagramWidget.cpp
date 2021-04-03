@@ -7,7 +7,7 @@
 #include <fstream>
 #include <wx/dcbuffer.h>
 
-
+wxDEFINE_EVENT(DIAGRAM_CHANGE, ChangeDiagramEvent);
 
 BEGIN_EVENT_TABLE(DiagramWidget, wxPanel)
 

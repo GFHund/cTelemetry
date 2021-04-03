@@ -2,6 +2,7 @@
 
 #include <wx/dcbuffer.h>
 #include "../data/vector.h"
+#include <fstream>
 
 BEGIN_EVENT_TABLE(TrackViewWidget, wxPanel)
     EVT_PAINT(TrackViewWidget::paintEvent)
@@ -18,6 +19,7 @@ TrackViewWidget::TrackViewWidget(wxFrame* parent,const wxSize& size)
     mColors.push_back(std::make_pair<int,int>(0x000A0000,0x00ff0000));
     mColors.push_back(std::make_pair<int,int>(0x000A0A00,0x00ffff00));
     
+    mEnableTrackPoint = false;
 }
 
 void TrackViewWidget::paintEvent(wxPaintEvent& evt){
@@ -77,12 +79,13 @@ void TrackViewWidget::render(wxDC& dc){
         }
         dataSetNumber++;
     }
-    dogEngine::CVector2 point = this->mPoint * trackScaling;
-    point = point + dogEngine::CVector2(translateX,translateY);
-    dc.SetPen(wxPen(wxColour(0,0,0)));
-    dc.DrawLine(point.getX()-5,point.getY()-5,point.getX()+5,point.getY()+5);
-    dc.DrawLine(point.getX()-5,point.getY()+5,point.getX()+5,point.getY()-5);
-    
+    if(mEnableTrackPoint){
+        dogEngine::CVector2 point = this->mPoint * trackScaling;
+        point = point + dogEngine::CVector2(translateX,translateY);
+        dc.SetPen(wxPen(wxColour(0,0,0)));
+        dc.DrawLine(point.getX()-5,point.getY()-5,point.getX()+5,point.getY()+5);
+        dc.DrawLine(point.getX()-5,point.getY()+5,point.getX()+5,point.getY()-5);
+    }
 }
 void TrackViewWidget::addTrackDataset(TrackDataSet dataset){
     this->mDataSets.push_back(dataset);
@@ -121,5 +124,6 @@ void TrackViewWidget::calculateOverallMinMax(){
 
 void TrackViewWidget::setPoint(dogEngine::CVector2 vec){
     this->mPoint = vec;
+    mEnableTrackPoint = true;
     this->paintNow();
 }

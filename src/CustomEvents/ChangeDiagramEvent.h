@@ -2,7 +2,7 @@
 #define __CHANGE_DIAGRAM_EVENT__
 #include <wx/wx.h>
 #include <wx/sizer.h>
-class ChangeDiagramEvent: public wxEvent{
+class ChangeDiagramEvent: public wxCommandEvent{
     private:
         float mXAxis;
     public:

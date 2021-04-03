@@ -9,16 +9,8 @@
 
 class TrackViewWidget: public wxWindow{
     private:
-    /*
-    struct colorLegend{
-		int from;
-		int to;
-		int color;
-	};
-    */
 
 	std::vector<TrackDataSet> mDataSets;
-	//std::vector<colorLegend> mColors;
     std::vector< std::pair<int,int> > mColors;
     float mOverallMinX;
 	float mOverallMaxX;
@@ -27,6 +19,7 @@ class TrackViewWidget: public wxWindow{
     int mTrackMinWidth;
     int mTrackMinHeight;
     dogEngine::CVector2 mPoint;
+    bool mEnableTrackPoint;
 
     void calculateOverallMinMax();
     DECLARE_EVENT_TABLE();

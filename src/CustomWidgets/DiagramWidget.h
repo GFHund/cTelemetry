@@ -3,6 +3,16 @@
 
 #include "../data/DiagramDataSet.h"
 #include "../CustomEvents/ChangeDiagramEvent.h"
+
+wxDECLARE_EVENT(DIAGRAM_CHANGE,ChangeDiagramEvent);
+
+//#define ChangeDiagramEventHandler(func) (&func)
+typedef void (wxEvtHandler::*ChangeDiagramEventFunction)(ChangeDiagramEvent&);
+#define ChangeDiagramEventHandler(func) wxEVENT_HANDLER_CAST(ChangeDiagramEventFunction, func)
+
+#define CHANGE_DIAGRAM_EVENT(id, func) \
+	wx__DECLARE_EVT1(DIAGRAM_CHANGE, id, ChangeDiagramEventHandler(func))
+
 class DiagramWidget: public wxWindow{
 	private:
 	const int PADDING_X = 20;
@@ -52,8 +62,7 @@ class DiagramWidget: public wxWindow{
 	DECLARE_EVENT_TABLE();
 };
 
-wxDEFINE_EVENT(DIAGRAM_CHANGE,ChangeDiagramEvent);
 
-#define ChangeDiagramEventHandler(func) (&func)
 
-#define CHANGE_DIAGRAM_EVENT(id, func) wx__DECLARE_EVT1(DIAGRAM_CHANGE, id, ChangeDiagramEventHandler(func))
+
+

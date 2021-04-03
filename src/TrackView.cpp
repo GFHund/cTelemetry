@@ -34,13 +34,12 @@ TrackView::~TrackView(){
     EventManager::getInstance()->unsubscribe("ChangeProperty",this);
 }
 void TrackView::event(std::string eventName,EventParam* param){
-    
     if(eventName.compare("ChangeProperty") == 0){
         std::string propertyName = param->getString("propertyName");
         mPropertyName = propertyName;
         addDataToTrackView();
     }
-    else if(eventName.compare("DiagramChanged") == 0){
+    else if(eventName.compare("DiagramChanged") == 0){    
         float vecX = param->getFloat("xPos");
         float vecY = param->getFloat("yPos");
         float vecZ = param->getFloat("zPos");
