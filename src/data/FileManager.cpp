@@ -49,7 +49,28 @@ void FileManager::openFile(std::string path){
                 }
             }
         }
-        mFiles.push_back(DbFile(db,path));
+
+        sqlite3* inMemoryDb;
+        int rc3 = sqlite3_open(":memory:",&inMemoryDb);
+        if(rc3){
+            //std::cout << "Could Not In Memory Database" << std::endl;
+            //throw FileNotFoundException("memory");
+            mFiles.push_back(DbFile(db,path));
+            return;
+        }
+        sqlite3_backup *pBackup;
+        pBackup = sqlite3_backup_init(inMemoryDb, "main", db, "main");
+        if( pBackup ){
+            (void)sqlite3_backup_step(pBackup, -1);
+            (void)sqlite3_backup_finish(pBackup);
+            sqlite3_close(db);
+            mFiles.push_back(DbFile(inMemoryDb,path));
+        }
+        else {
+            mFiles.push_back(DbFile(db,path));
+        }
+
+        
     }catch(SQLErrorException e){
     	std::string errorMsg = std::string(e.what());
     	sqlite3_close(db);
