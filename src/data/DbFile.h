@@ -10,6 +10,7 @@
 #include "DiagramDataSet.h"
 #include "TrackDataSet.h"
 #include "vector.h"
+#include "FileTableFilter.h"
 
 class DbFile{
 	private:
@@ -25,7 +26,7 @@ class DbFile{
         ~DbFile();
 
         std::string getName();
-        std::vector<FileTableData> getFileTable();
+        std::vector<FileTableData> getFileTable(FileTableFilter* filter = nullptr);
         std::map<int,std::string> getYProperties();
         int getKeyFromPropertiesName(std::string PropertiesName);
         std::string getPropertiesNameFromKey(int key);

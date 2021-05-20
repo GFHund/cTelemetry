@@ -5,6 +5,7 @@
 
 #include <string>
 #include "data/FileManager.h"
+#include "data/FileTableFilter.h"
 #include "data/Exceptions/FileNotFoundException.h"
 #include "data/Exceptions/FileOpenErrorException.h"
 #include "data/Exceptions/NotFoundException.h"
@@ -21,6 +22,8 @@ BEGIN_EVENT_TABLE(DataView, wxFrame)
 
 	EVT_DATAVIEW_ITEM_ACTIVATED(XRCID("mAnalyseList"), DataView::OnAnalyseDataListDClick)
 	EVT_BUTTON(XRCID("mDeleteLap"),DataView::OnDeleteAnalyseButton)
+
+	EVT_TEXT(XRCID("mSearchCtrl"),DataView::onSearchInput)
 END_EVENT_TABLE()
 
 DataView::DataView(wxWindow* parent){
@@ -214,4 +217,34 @@ void DataView::removeFromAnalyseTable(int row){
 		wxMessageDialog* msg = new wxMessageDialog(this,wxMessage,"SQL error",wxOK|wxCENTRE|wxICON_INFORMATION);
 		msg->ShowModal();
 	}
+}
+
+void DataView::filterFileData(){
+	wxTextCtrl* searchCtrl = XRCCTRL(*this,"mSearchCtrl",wxTextCtrl);
+	wxTextCtrl* roundCtrl = XRCCTRL(*this,"mRoundCtrl",wxTextCtrl);
+	wxDataViewListCtrl* fileDataList = XRCCTRL(*this, "mFileDataList", wxDataViewListCtrl);
+	wxListBox* pFileOpenList = XRCCTRL(*this, "mOpenFiles", wxListBox);
+
+	std::string searchString = searchCtrl->GetValue().ToStdString();
+	FileTableFilter filter;
+	filter.mSearchString = searchString;
+	
+	int selectionIndex = pFileOpenList->GetSelection();
+	wxString selectionString = pFileOpenList->GetString(selectionIndex);
+
+	try{
+		fileDataList->DeleteAllItems();
+		
+		std::vector<FileTableData> fileDataTable = FileManager::getInstance()->getOpenDbFileByName(selectionString.ToStdString()).getFileTable(&filter);
+	} catch(SQLErrorException e){
+		std::string message = "Error: ";
+		message += e.what();
+		wxString wxMessage = wxString(message);
+		wxMessageDialog* msg = new wxMessageDialog(this,wxMessage,"SQL error",wxOK|wxCENTRE|wxICON_ERROR);
+		msg->ShowModal();
+	}
+}
+
+void DataView::onSearchInput(wxCommandEvent& event){
+	filterFileData();
 }

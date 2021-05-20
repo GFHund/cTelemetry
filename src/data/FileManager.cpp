@@ -53,8 +53,6 @@ void FileManager::openFile(std::string path){
         sqlite3* inMemoryDb;
         int rc3 = sqlite3_open(":memory:",&inMemoryDb);
         if(rc3){
-            //std::cout << "Could Not In Memory Database" << std::endl;
-            //throw FileNotFoundException("memory");
             mFiles.push_back(DbFile(db,path));
             return;
         }
